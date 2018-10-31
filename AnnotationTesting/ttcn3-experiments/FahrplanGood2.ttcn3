@@ -1,0 +1,72 @@
+module FahrplanGood2 {
+	
+	type charstring string;
+	
+	// get /location/{name} 				Get location information
+	// Get information about locations matching the given name or name fragment
+	
+	type record GetLocation {
+		string locationName	
+	} with {
+		variant "get"
+		encode "path: /location";
+		encode (locationName) "path";
+	}
+
+	type record Location {
+		string name,
+		float lon,
+		float lat,
+		string id
+	} 
+	
+	type record GetLocation_Response {
+		record of Location locations	
+	}
+
+
+	template GetLocation getLocation(string _name) := {
+		locationName := _name
+	} ;
+	
+	template Location BerlinHbf := {
+		name := "Berlin Hbf",
+		lon := ?,
+		lat := ?,
+		id := "8011113"
+		 
+	}
+	template GetLocation_Response getLocationResponse := {
+		locations := superset(BerlinHbf)
+	} 
+
+	//  get /arrivalBoard/{id} 			    Get arrival board of a location
+	//  get /departureBoard/{id}     	    Get departure board of a location
+	//  get /journeyDetails/{id}		    Get details about a single journey
+
+	
+	type port fahrplanAPI message {
+		out GetLocation;
+		in GetLocation_Response;
+		
+		map param (string host, string basePath);
+	}
+	
+	type component FahrplanClient {
+		port fahrplanAPI api_v1;
+	}
+	type component FahrplanV1 {
+		port fahrplanAPI api;
+	}
+	
+	testcase T1() runs on FahrplanClient system FahrplanV1 {
+	map(self:api_v1, system:api); // param ("https://api.deutschebahn.com", "/fahrplan-plus/v1/");
+	api_v1.send(getLocation("Berlin HbF"));
+	alt {
+		[] api_v1.receive(getLocationResponse) {}
+		[else] { setverdict(inconc);}
+	}
+		
+		
+	}
+} with { encode "REST"}

@@ -1,0 +1,78 @@
+module RESTTestSeries1 {
+	import from API_DB_Fahrplan all;
+
+	template Location BerlinHbf := {
+		name := "Berlin Hbf", lon := ?, lat := ?, id := "8011160"
+	}
+
+	testcase test_RESTGetPathEncoding()
+		runs on RESTComponent system DBRestService {
+		log("Check REST/get call towards DB");
+		map(mtc:p, system:s) param (BASE_URL, AUTHORIZATION);
+
+		p.send(getLocation("Berlin Hbf"));
+		timer t;
+		t.start(5.0);
+
+		alt {
+		[] p.receive(GetLocation_Response:{locations := superset(BerlinHbf)}) {
+				setverdict(pass);
+				t.stop;
+			}
+		[] p.receive {
+				setverdict(fail);
+			}
+		[] t.timeout {
+				setverdict(fail, "Server was not responding. Check base url");
+			}
+		}
+	}
+
+	testcase test_parameterizeMap() runs on RESTComponent system DBRestService {
+		map(mtc:p, system:s) param (BASE_URL, AUTHORIZATION);
+
+		p.send(getLocation("Berlin Steglitz"));
+
+		timer t;
+		t.start(5.0);
+
+		alt {
+		[] p.receive(GetLocation_Response:{locations := ?}) {
+				setverdict(pass);
+				t.stop;
+			}
+		[] p.receive {
+				setverdict(fail);
+			}
+		[] t.timeout {
+				setverdict(fail, "Server was not responding. Check base url");
+			}
+		}
+	}
+
+
+	testcase test_getArrivalBoard() runs on RESTComponent system DBRestService {
+		map(mtc:p, system:s) param (BASE_URL, AUTHORIZATION);
+
+		p.send(getArrivalBoard("8011160", "2018-10-31"));
+
+		timer t;
+		t.start(5.0);
+
+		alt {
+		[] p.receive(GetArrivalBoard_Response:{boards := ?}) {
+				setverdict(pass);
+				t.stop;
+			}
+		[] p.receive {
+				setverdict(fail);
+			}
+		[] t.timeout {
+				setverdict(fail, "Server was not responding. Check base url");
+			}
+		}
+	}
+}
+with {
+	encode "RESTfull/json"
+}

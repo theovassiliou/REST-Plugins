@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<!DOCTYPE plugin PUBLIC "-//TESTING TECH//DTD TT3plugin//2.0" "TT3plugin.dtd"> 
+<plugin id="de.vassiliougioles.ttcn.ttwb.codec.SATPlugin2" name="SATPlugin2" provider-name="Vassiliou-Gioles" version="1.0.0">
+  <runtime>
+    <library name="../../build/SATPlugin"/>
+    <library name="../../build/RESTPlugin"/>
+    <library name="lib/json-simple-1.1.1.jar"/>
+  </runtime>
+  <dependency/>
+  <extension point="com.testingtech.ttcn.extension.CodecProvider">
+    <parameter id="name" value="SAT"/>
+    <parameter id="description" value="A Simple Codec for Testing Annotation"/>
+    <parameter id="class" value="de.vassiliougioles.ttcn.ttwb.codec.SATProvider"/>
+    <parameter id="encoding"/>
+  </extension>
+  <extension point="com.testingtech.ttcn.tri.extension.PortPluginProvider">
+    <parameter id="name" value="RESTPort"/>
+    <parameter id="description" value="REST PortPlugin"/>
+    <parameter id="class" value="de.vassiliougioles.ttcn.ttwb.port.RESTPortPlugin"/>
+    <parameter id="xtri" value="true"/>
+  </extension>
+</plugin>

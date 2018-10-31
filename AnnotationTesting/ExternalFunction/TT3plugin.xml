@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<!DOCTYPE plugin PUBLIC "-//TESTING TECH//DTD TT3plugin//2.0" "TT3plugin.dtd"> 
+<plugin id="Default-ID" name="Default-Name" provider-name="Default-Provider" version="Default-Version">
+  <runtime/>
+  <dependency/>
+  <extension point="com.testingtech.ttcn.extension.ExternalFunctionsProvider"/>
+</plugin>
