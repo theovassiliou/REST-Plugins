@@ -1,0 +1,20 @@
+module Lib_Http {
+	type record HTTPResponse {
+		StatusLine statusLine, set of Header headers, Body body
+	}
+	with {
+		encode "HTTP/response"
+	}
+
+	type record StatusLine {
+		integer statusCode, charstring reasonPhrase
+	}
+
+	type record Body {
+		charstring messageBodyTxt, octetstring messageBodyRaw
+	}
+
+	type record Header {
+		charstring name, charstring val
+	}
+}

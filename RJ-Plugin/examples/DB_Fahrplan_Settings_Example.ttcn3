@@ -1,0 +1,5 @@
+module DB_Fahrplan_Settings_Example {
+	modulepar
+		charstring AUTHORIZATION := "Bearer b329468dff06cd6982a1905ea86411e4";
+
+}

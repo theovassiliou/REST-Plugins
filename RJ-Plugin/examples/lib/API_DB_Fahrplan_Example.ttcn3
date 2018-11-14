@@ -1,0 +1,91 @@
+module API_DB_Fahrplan_Example {
+	import from Lib_Http all;
+	import from Lib_JSON all;
+
+	const charstring BASE_URL := "https://api.deutschebahn.com/fahrplan-plus/v1";
+	const charstring AUTHORIZATION := "Authorization: Basic NOT DEFINED";
+
+	// The REST Calls
+	
+	type record GetLocation {
+		string locationName
+	}
+	with {
+		encode "REST/get";
+		encode "200: LocationResponse";
+		encode "500: ErrorModel";
+		variant "path: /location/{locationName}";
+		encode (locationName) "path";
+		variant (locationName) "niu - not in use"
+	}
+
+	type record LocationResponse {
+		set of Location locations
+	}
+	with {
+		encode "REST/getResponse";
+		encode (locations) "type: Location"
+	}
+
+
+	type record GetArrivalBoard {
+		string id, dateISO8601 date
+	}
+	with {
+		encode "REST/get";
+		variant "path: /arrivalBoard/{id}?date={date}"
+	}
+
+	type record GetArrivalBoard_Response {
+		record of Board boards
+	}
+	with {
+		encode "REST/getResponse";
+		encode (boards) "type: Board"
+	}
+
+	type record Board {
+		string name,
+		string _type,
+		string boardId,
+		string stopId,
+		string stopName,
+		string dateTime,
+		string origin,
+		string track optional,
+		string detailsId
+	}
+	with {
+		variant (_type) "type"
+	}
+
+	type record Location {
+		string name, float lon, float lat, string id
+	}
+
+
+	template GetLocation getLocation(string _name) := {locationName := _name}
+	template GetArrivalBoard getArrivalBoard(string _id, dateISO8601 _date) := {
+		id := _id, date := _date
+	}
+
+
+	
+	type port RESTfull message {
+		out GetLocation; out GetArrivalBoard;
+		in LocationResponse; in GetArrivalBoard_Response;
+		in HTTPResponse;
+		map param (charstring baseUrl, charstring authorization);
+	}
+
+	type component RESTComponent {
+		port RESTfull p;
+	}
+
+	type component DBRestService {
+		port RESTfull s;
+	}
+}
+with {
+	encode "RESTfull/json"
+}

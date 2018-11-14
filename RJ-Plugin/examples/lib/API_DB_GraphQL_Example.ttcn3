@@ -1,0 +1,103 @@
+module API_DB_GraphQL_Example {
+	import from Lib_Http all;
+	import from Lib_JSON all;
+
+	const charstring BASE_URL := "https://api.deutschebahn.com/1bahnql/v1";
+	const charstring AUTHORIZATION := "Authorization: Basic NOT DEFINED";
+
+	// The REST Calls
+	type record graphQL {
+		record {
+			string query
+		} body
+	}
+	with {
+		encode "REST/post";
+		variant "path: /graphql";
+		encode (body) "body/JSON";
+		variant (body) "niu - not in use"
+	}
+
+	type record artificalPOST {
+		string id,
+		record {
+			string query
+		} body
+	}
+	with {
+		encode "REST/post";
+		variant "path: /graphql/{id}";
+		encode (body) "body/JSON"
+	}
+
+
+
+	template graphQL queryStation(string id) := {
+		body := {
+			query :=
+				"{stationWithEvaId(evaId: " & id &
+				") { name location { latitude longitude }  picture { url } } }"
+		}
+	}
+	// { "query": "{stationWithEvaId(evaId: 8000105) { name location { latitude
+	// longitude }  picture { url } } }" }
+	// Response:
+	/*
+	 * {
+			  "data": {
+				"stationWithEvaId": {
+				  "name": "Frankfurt (Main) Hbf",
+				  "location": {
+					"latitude": 50.107145,
+					"longitude": 8.663789
+				  },
+				  "picture": {
+					"url": "https://fotos.railway-stations.org/fotos/de/1866.jpg"
+				  }
+				}
+			  }
+		}
+	 */
+	type record graphQLResponseExample1 {
+		Example1Response response
+	}
+	with {
+			encode "REST/postResponse";
+		}
+		
+	type record Example1Response {
+		record {
+			record {
+				string name,
+				record {
+					float latitude, float longitude
+				} location,
+				record {
+					string url
+				} picture
+			} stationWithEvaId
+		} data
+	} with 
+	{
+				encode "REST/postResponse";
+			}
+		
+
+	type port RESTfull message {
+		out graphQL;
+		in graphQLResponseExample1;
+		in HTTPResponse;
+		map param (charstring baseUrl, charstring authorization);
+	}
+
+	type component RESTComponent {
+		port RESTfull p;
+	}
+
+	type component DBRestService {
+		port RESTfull s;
+	}
+}
+with {
+	encode "RESTfull/json"
+}

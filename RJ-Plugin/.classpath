@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="com.testingtech.ttworkbench.core.TTWB_LIBRARY"/>
+	<classpathentry kind="src" output="build/RESTPlugin" path="RESTPlugin"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="tt3plugins/RJPlugin/lib/jetty-all-9.4.2.v20170220-uber.jar"/>
+	<classpathentry kind="lib" path="tt3plugins/RJPlugin/lib/json-simple-1.1.1.jar"/>
+	<classpathentry kind="output" path="build/default"/>
+</classpath>

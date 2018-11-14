@@ -1,0 +1,8 @@
+module Lib_JSON {
+
+	// Some usefull JSON related types
+	type universal charstring string;
+	type string dateISO8601;
+
+
+}
