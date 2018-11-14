@@ -315,41 +315,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TciCDProvided {
 		// Let's try to iterate over a given record
 		switch (template.getType().getTypeClass()) {
 		case TciTypeClass.RECORD:
-			System.out.println(template.getType().getName());
-			System.out.println(template.toString());
-			System.out.println("Type Encoding: " + template.getType().getTypeEncoding());
-			System.out.println("Type Variant: " + template.getType().getTypeEncodingVariant());
-			System.out.println("Value EncodeAttributes: " + Arrays.toString(template.getEncodeAttributes()));
-			System.out.println("Value VariantAttributes: "
-					+ Arrays.toString(template.getVariantAttributes(template.getValueEncoding())));
-
-			if (template.getType().getName().equals("RecordOne")) {
-				assertion("RecordOne", template.getType().getName());
-				System.out.println(
-						"locationName:" + ((RecordValue) template).getField("locationName").getValueEncoding());
-				System.out.println(
-						"locationName:" + ((RecordValue) template).getField("locationName").getValueEncodingVariant());
-				System.out.println("path:" + ((RecordValue) template).getField("path").getValueEncoding());
-				System.out.println("path:" + ((RecordValue) template).getField("path").getValueEncodingVariant());
-			} else if (template.getType().getName().equals("RecordTwo")) {
-				assertion("RecordTwo", template.getType().getName());
-				System.out.println(
-						"locationName:" + ((RecordValue) template).getField("locationName").getValueEncoding());
-				System.out.println(
-						"locationName:" + ((RecordValue) template).getField("locationName").getValueEncodingVariant());
-				System.out.println("path:" + ((RecordValue) template).getField("path").getValueEncoding());
-				System.out.println("path:" + ((RecordValue) template).getField("path").getValueEncodingVariant());
-
-			} else {
-				assertion("GetLocation", template.getType().getName());
-				System.out.println("locationName Encoding:"
-						+ ((RecordValue) template).getField("locationName").getValueEncoding());
-				System.out.println("locationName Variant:"
-						+ ((RecordValue) template).getField("locationName").getValueEncodingVariant());
-
-				return super.encode(template);
-			}
-
+			break;
 		}
 		return super.encode(template);
 	}
