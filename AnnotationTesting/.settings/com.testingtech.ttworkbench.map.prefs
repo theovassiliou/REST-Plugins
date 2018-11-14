@@ -1,3 +1,0 @@
-default-offline-usage=false
-default-tile-addr=http\://a.tile.openstreetmap.org/{z}/{x}/{y}.png
-eclipse.preferences.version=1
