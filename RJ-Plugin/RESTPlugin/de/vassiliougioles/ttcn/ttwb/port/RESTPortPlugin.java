@@ -340,7 +340,13 @@ public class RESTPortPlugin extends AbstractMsgBasedSA implements XPortPluginPro
 				Request request = httpClient.POST(strURL);
 				request = request.header("Accept", "application/json");
 
-				request = request.header("Authorization", authorization);
+				if (!authorization.equals("NO AUTHORIZATION SET")) {
+					request = request.header("Authorization", authorization);
+				} else {
+					// FIXME: hanlding issue if no auth-header given but requested. jett.send()
+					// throws expection
+				}
+				
 				// request = request.header ("Content-Type", "application/json");
 				request = request.agent("TTworkbench/26 RESTPortPlugin/0.1");
 
