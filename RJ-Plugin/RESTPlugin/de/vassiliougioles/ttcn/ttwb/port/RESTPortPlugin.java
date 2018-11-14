@@ -4,6 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
+import java.util.Iterator;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.client.HttpClient;
@@ -110,6 +111,22 @@ public class RESTPortPlugin extends AbstractMsgBasedSA implements XPortPluginPro
 		Enumeration<TciParameter> parameterList = paramList.getParameters();
 		while (parameterList.hasMoreElements()) {
 			TciParameter param = (TciParameter) parameterList.nextElement();
+			if (param.getParameterName().equals("config")) {
+				RecordValue rv = (RecordValue) param.getParameter();
+				String[] fieldNames = rv.getFieldNames();
+				for (int i = 0; i < fieldNames.length; i++) {
+					String string = fieldNames[i];
+					if (string.equals("baseUrl")) {
+						UniversalCharstringValue cv = (UniversalCharstringValue) rv.getField(string);
+						baseURL = cv.getString();
+					} else if (string.equals("authorization")) {
+						UniversalCharstringValue cv = (UniversalCharstringValue) rv.getField(string);
+						authorization = cv.getString();
+					}
+
+				}
+			}
+
 			if (param.getParameterName().equals("baseUrl")) {
 				baseURL = ((CharstringValue) param.getParameter()).getString();
 			}
@@ -131,7 +148,21 @@ public class RESTPortPlugin extends AbstractMsgBasedSA implements XPortPluginPro
 	public TriStatus xtriSend(TriComponentId componentId, TriPortId tsiPortId, Value sutAddress, Value sendMessage) {
 		assert tsiPortId.getPortTypeName().split("\\.")[1]
 				.equals("RESTfull") : "We only handle operations on RESTfull ports";
-		// TODO: handle sutAddress to be able to redirect to another service
+
+		if ((!(sutAddress == null)) && sutAddress.getType().getName().equals("RESTAPIconfig")) {
+			RecordValue rv = (RecordValue) sutAddress;
+			String[] fieldNames = rv.getFieldNames();
+			for (int i = 0; i < fieldNames.length; i++) {
+				String string = fieldNames[i];
+				if (string.equals("baseUrl")) {
+					UniversalCharstringValue cv = (UniversalCharstringValue) rv.getField(string);
+					baseURL = cv.getString();
+				} else if (string.equals("authorization")) {
+					UniversalCharstringValue cv = (UniversalCharstringValue) rv.getField(string);
+					authorization = cv.getString();
+				}
+			}
+		}
 
 		// check whether encode is REST/get
 		if (sendMessage.getType().getTypeEncoding().equals("REST/get")) {
@@ -187,7 +218,12 @@ public class RESTPortPlugin extends AbstractMsgBasedSA implements XPortPluginPro
 				Request request = httpClient.newRequest(strURL);
 				request = request.header("Accept", "application/json");
 
-				request = request.header("Authorization", authorization);
+				if (!authorization.equals("NO AUTHORIZATION SET")) {
+					request = request.header("Authorization", authorization);
+				} else {
+					// FIXME: hanlding issue if no auth-header given but requested. jett.send()
+					// throws expection
+				}
 				request = request.agent("TTworkbench/26 RESTPortPlugin/0.1");
 				ContentResponse response = request.send();
 
@@ -307,24 +343,26 @@ public class RESTPortPlugin extends AbstractMsgBasedSA implements XPortPluginPro
 				request = request.header("Authorization", authorization);
 				// request = request.header ("Content-Type", "application/json");
 				request = request.agent("TTworkbench/26 RESTPortPlugin/0.1");
-				
-			    // let's build the message body
-				
+
+				// let's build the message body
+
 				// it is in the field of the record with the encode attribute "body/JSON"
 				Value fieldToEncode = null;
 				String[] fieldNames = restPOST.getFieldNames();
 				for (int i = 0; i < fieldNames.length; i++) {
 					String string = fieldNames[i];
 					Value field = restPOST.getField(string);
-					if(field.getValueEncoding().equals("body/JSON")) {fieldToEncode = field;}
+					if (field.getValueEncoding().equals("body/JSON")) {
+						fieldToEncode = field;
+					}
 				}
-				
+
 				String theJSON = null;
-				if(fieldToEncode != null) {
+				if (fieldToEncode != null) {
 					theJSON = TTCN2JSONencode(fieldToEncode);
 				}
-				
-			    request.content(new StringContentProvider(theJSON, "UTF-8"), "application/json");
+
+				request.content(new StringContentProvider(theJSON, "UTF-8"), "application/json");
 				logDebug("The Body: " + theJSON);
 				ContentResponse response = request.send();
 
@@ -386,16 +424,18 @@ public class RESTPortPlugin extends AbstractMsgBasedSA implements XPortPluginPro
 
 	private String TTCN2JSONencode(Value fieldToEncode) {
 		StringBuilder builder = new StringBuilder();
-		
+
 		switch (fieldToEncode.getType().getTypeClass()) {
 		case TciTypeClass.RECORD:
 			builder.append("{ ");
 			RecordValue rv = (RecordValue) fieldToEncode;
-			String[] fieldNames = rv.getFieldNames(); 
+			String[] fieldNames = rv.getFieldNames();
 			for (int i = 0; i < fieldNames.length; i++) {
 				builder.append(String2JSON(fieldNames[i])).append(": ");
 				builder.append(TTCN2JSONencode(rv.getField(fieldNames[i])));
-				if(i < fieldNames.length - 2) { builder.append(", "); } 
+				if (i < fieldNames.length - 2) {
+					builder.append(", ");
+				}
 			}
 			builder.append(" }");
 			break;
@@ -412,13 +452,13 @@ public class RESTPortPlugin extends AbstractMsgBasedSA implements XPortPluginPro
 			builder.append(((FloatValue) fieldToEncode).getFloat());
 			break;
 		}
-		
+
 		return builder.toString();
 	}
 
 	private String String2JSON(String string) {
 		// TODO Auto-generated method stub
-		return new String("\""+string+"\"");
+		return new String("\"" + string + "\"");
 	}
 
 	@Override

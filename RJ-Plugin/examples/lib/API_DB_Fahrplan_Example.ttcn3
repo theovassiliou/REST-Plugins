@@ -69,15 +69,23 @@ module API_DB_Fahrplan_Example {
 		id := _id, date := _date
 	}
 
-
-	
 	type port RESTfull message {
 		out GetLocation; out GetArrivalBoard;
 		in LocationResponse; in GetArrivalBoard_Response;
 		in HTTPResponse;
-		map param (charstring baseUrl, charstring authorization);
+		map param (RESTAPIconfig config);
 	}
 
+	type record RESTAPIconfig {
+		string baseUrl,
+		string authorization optional
+	}
+	
+	template  RESTAPIconfig config(string auth) := {
+		baseUrl := BASE_URL,
+		authorization := auth
+	}
+	
 	type component RESTComponent {
 		port RESTfull p;
 	}
