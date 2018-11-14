@@ -8,7 +8,7 @@ module REST_POST_TestSeries1 {
 	testcase test_RESTPut_1()
 		runs on RESTComponent system DBRestService {
 		log("Check REST/put call towards DB");
-		map(mtc:p, system:s) param (BASE_URL, AUTHORIZATION);
+		map(mtc:p, system:s) param (config(AUTHORIZATION));
 		p.send(queryStation("8000105"));
 		timer t;
 		t.start(5.0);
@@ -37,7 +37,7 @@ module REST_POST_TestSeries1 {
 	testcase test_RESTPut_2()
 		runs on RESTComponent system DBRestService {
 		log("Check REST/put call towards DB");
-		map(mtc:p, system:s) param (BASE_URL, AUTHORIZATION);
+		map(mtc:p, system:s) param (config(AUTHORIZATION));
 		p.send(queryStation("001"));
 		timer t;
 		t.start(5.0);
@@ -68,7 +68,7 @@ module REST_POST_TestSeries1 {
 	testcase test_RESTPut_3()
 		runs on RESTComponent system DBRestService {
 		log("Check REST/put call towards DB");
-		map(mtc:p, system:s) param (BASE_URL, AUTHORIZATION);
+		map(mtc:p, system:s) param (config(AUTHORIZATION));
 		p.send(queryStation("abc"));
 		timer t;
 		t.start(5.0);

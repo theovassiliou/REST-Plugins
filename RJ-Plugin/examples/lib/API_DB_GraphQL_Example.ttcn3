@@ -62,9 +62,9 @@ module API_DB_GraphQL_Example {
 		Example1Response response
 	}
 	with {
-			encode "REST/postResponse";
-		}
-		
+		encode "REST/postResponse"
+	}
+
 	type record Example1Response {
 		record {
 			record {
@@ -77,19 +77,26 @@ module API_DB_GraphQL_Example {
 				} picture
 			} stationWithEvaId
 		} data
-	} with 
-	{
-				encode "REST/postResponse";
-			}
-		
+	}
+	with {
+		encode "REST/postResponse"
+	}
+
 
 	type port RESTfull message {
 		out graphQL;
 		in graphQLResponseExample1;
 		in HTTPResponse;
-		map param (charstring baseUrl, charstring authorization);
+		map param (RESTAPIconfig config);
 	}
 
+	type record RESTAPIconfig {
+		string baseUrl, string authorization optional
+	}
+
+	template RESTAPIconfig config(string auth) := {
+		baseUrl := BASE_URL, authorization := auth
+	}
 	type component RESTComponent {
 		port RESTfull p;
 	}
