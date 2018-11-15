@@ -24,7 +24,7 @@ module API_DB_Fahrplan_Example {
 	}
 	with {
 		encode "REST/getResponse";
-		encode (locations) "type: Location"
+		encode (locations) "body/JSON"
 	}
 
 
@@ -41,7 +41,7 @@ module API_DB_Fahrplan_Example {
 	}
 	with {
 		encode "REST/getResponse";
-		encode (boards) "type: Board"
+		encode (boards) "body/JSON"
 	}
 
 	type record Board {

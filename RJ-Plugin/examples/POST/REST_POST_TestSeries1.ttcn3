@@ -14,7 +14,7 @@ module REST_POST_TestSeries1 {
 		t.start(5.0);
 
 		alt {
-		[] p.receive(graphQLResponseExample1:?) {
+		[] p.receive(graphQLResponseExample1: {?, ?}) {
 				setverdict(pass);
 			}
 		[] p.receive(HTTPResponse:
@@ -43,7 +43,7 @@ module REST_POST_TestSeries1 {
 		t.start(5.0);
 
 		alt {
-		[] p.receive(graphQLResponseExample1:?) {
+		[] p.receive(graphQLResponseExample1: {?, ?}) {
 				setverdict(inconc);
 			}
 		[] p
@@ -74,7 +74,7 @@ module REST_POST_TestSeries1 {
 		t.start(5.0);
 
 		alt {
-		[] p.receive(graphQLResponseExample1:?) {
+		[] p.receive(graphQLResponseExample1:{?, ?}) {
 				setverdict(pass);
 			}
 		[] p
