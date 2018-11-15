@@ -156,16 +156,19 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TciCDProvided {
 			try {
 				RecordValue value = (RecordValue) decodingHypothesis.newInstance();
 				Object obj;
-				obj = parser.parse(rm.getContent());
-				if (obj == null)
-					return null; // Can't create a JSON object
-				Value rov = (Value) value.getField(value.getFieldNames()[0]);
-				Value mappedObject = mapJSON(rov, obj);
-				if (mappedObject == null)
-					return null;
-				value.setField(value.getFieldNames()[0], mappedObject);
-				return value;
-
+				if (rm.getContent() != null) {
+					obj = parser.parse(rm.getContent());
+					if (obj == null)
+						return null; // Can't create a JSON object
+					Value rov = (Value) value.getField(value.getFieldNames()[0]);
+					Value mappedObject = mapJSON(rov, obj);
+					if (mappedObject == null)
+						return null;
+					value.setField(value.getFieldNames()[0], mappedObject);
+					return value;
+				} else {
+					return value;
+				}
 			} catch (ParseException e) {
 				// Well, if we can't parse it, we can't parse it.
 				return null;
@@ -206,9 +209,11 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TciCDProvided {
 	private Value decodeBody(Value _body, ResponseMessage rm) {
 		RecordValue body = (RecordValue) _body;
 		CharstringValue messageBodyTxt = (CharstringValue) body.getField("messageBodyTxt");
-		messageBodyTxt.setString(rm.getContent());
-		body.setField("messageBodyTxt", messageBodyTxt);
-		body.setField("messageBodyRaw", newOctetstringValue(rm.getContent().getBytes(StandardCharsets.UTF_8)));
+		if (rm.getContent() != null) {
+			messageBodyTxt.setString(rm.getContent());
+			body.setField("messageBodyTxt", messageBodyTxt);
+			body.setField("messageBodyRaw", newOctetstringValue(rm.getContent().getBytes(StandardCharsets.UTF_8)));
+		}
 		return _body;
 	}
 
@@ -219,9 +224,9 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TciCDProvided {
 
 		statusCode.setInt(rm.getStatusCode());
 		statusLine.setField("statusCode", statusCode);
-		
+
 		// REASON Phrase is optional
-		if(rm.getReasonPhrase() != null) {
+		if (rm.getReasonPhrase() != null) {
 			reasonPhrase.setString(rm.getReasonPhrase());
 			statusLine.setField("reasonPhrase", reasonPhrase);
 		}

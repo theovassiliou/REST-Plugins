@@ -11,7 +11,7 @@ module Lib_Http {
 	}
 
 	type record Body {
-		charstring messageBodyTxt, octetstring messageBodyRaw
+		charstring messageBodyTxt optional, octetstring messageBodyRaw optional
 	}
 
 	type record Header {
