@@ -346,7 +346,7 @@ public class RESTPortPlugin extends AbstractMsgBasedSA implements XPortPluginPro
 					// FIXME: hanlding issue if no auth-header given but requested. jett.send()
 					// throws expection
 				}
-				
+
 				// request = request.header ("Content-Type", "application/json");
 				request = request.agent("TTworkbench/26 RESTPortPlugin/0.1");
 
@@ -420,7 +420,14 @@ public class RESTPortPlugin extends AbstractMsgBasedSA implements XPortPluginPro
 				e1.printStackTrace();
 				new TriStatusImpl(e1.getMessage());
 			}
-
+			
+			try {
+				httpClient.stop();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			httpClient.destroy();
 			return TriStatusImpl.OK;
 		} else {
 			return TriStatusImpl.OK;
