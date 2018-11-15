@@ -147,28 +147,51 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TciCDProvided {
 		ResponseMessage rm = new ResponseMessage();
 		HttpParser hParser = new HttpParser(rm);
 		ByteBuffer bb = ByteBuffer.wrap(rcvdMessage.getEncodedMessage());
+		
 		while (!hParser.isComplete()) {
 			hParser.parseNext(bb);
 		}
 
+		HttpFields headers = rm.getHeaderFields();
+		
 		if (decodingHypothesis.getTypeEncoding().equals("REST/getResponse")
 				|| decodingHypothesis.getTypeEncoding().equals("REST/postResponse")) {
 			try {
 				RecordValue value = (RecordValue) decodingHypothesis.newInstance();
-				Object obj;
-				if (rm.getContent() != null) {
-					obj = parser.parse(rm.getContent());
-					if (obj == null)
-						return null; // Can't create a JSON object
-					Value rov = (Value) value.getField(value.getFieldNames()[0]);
-					Value mappedObject = mapJSON(rov, obj);
-					if (mappedObject == null)
-						return null;
-					value.setField(value.getFieldNames()[0], mappedObject);
-					return value;
-				} else {
-					return value;
+				String[] responseFieldsNames = value.getFieldNames();
+				
+				for (int i = 0; i < responseFieldsNames.length; i++) {
+					Value aField = value.getField(responseFieldsNames[i]);
+					if(aField.getValueEncoding().equals("body/JSON")) {
+						Object obj;
+						if (rm.getContent() != null) {
+							obj = parser.parse(rm.getContent());
+							if (obj == null)
+								return null; // Can't create a JSON object
+							Value rov = (Value) value.getField(responseFieldsNames[i]);
+							Value mappedObject = mapJSON(rov, obj);
+							if (mappedObject == null)
+								return null;
+							value.setField(responseFieldsNames[i], mappedObject);
+						}		
+					} else if (aField.getValueEncoding().startsWith("header")) {
+						String headerSpec = aField.getValueEncoding();
+						headerSpec = headerSpec.split("/")[1].trim();
+						HttpField hField = headers.getField(headerSpec);
+						if(hField == null) {
+							value.setFieldOmitted(responseFieldsNames[i]);
+							continue; // Header not included
+						}
+						String headerValue = hField.getValue();
+						if(headerValue != null ) { // TODO: Check that the variant indicates string encoding
+							((UniversalCharstringValue) aField).setString(headerValue);
+							value.setField(responseFieldsNames[i], aField);
+						}
+					} else {	
+						return value;
+					}
 				}
+				return value;
 			} catch (ParseException e) {
 				// Well, if we can't parse it, we can't parse it.
 				return null;

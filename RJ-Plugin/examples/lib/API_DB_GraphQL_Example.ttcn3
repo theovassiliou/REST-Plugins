@@ -18,20 +18,6 @@ module API_DB_GraphQL_Example {
 		variant (body) "niu - not in use"
 	}
 
-	type record artificalPOST {
-		string id,
-		record {
-			string query
-		} body
-	}
-	with {
-		encode "REST/post";
-		variant "path: /graphql/{id}";
-		encode (body) "body/JSON"
-	}
-
-
-
 	template graphQL queryStation(string id) := {
 		body := {
 			query :=
@@ -59,10 +45,13 @@ module API_DB_GraphQL_Example {
 		}
 	 */
 	type record graphQLResponseExample1 {
-		Example1Response response
+		Example1Response response,
+		string			 etag
 	}
 	with {
-		encode "REST/postResponse"
+		encode "REST/postResponse";
+		encode (response) "body/JSON"; // decodes the Body as JSON into this field
+		encode (etag) "header/ETag"; //
 	}
 
 	type record Example1Response {
