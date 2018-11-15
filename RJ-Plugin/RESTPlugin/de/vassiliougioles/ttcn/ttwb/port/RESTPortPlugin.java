@@ -439,7 +439,7 @@ public class RESTPortPlugin extends AbstractMsgBasedSA implements XPortPluginPro
 			for (int i = 0; i < fieldNames.length; i++) {
 				builder.append(String2JSON(fieldNames[i])).append(": ");
 				builder.append(TTCN2JSONencode(rv.getField(fieldNames[i])));
-				if (i < fieldNames.length - 2) {
+				if (i < fieldNames.length - 1) {
 					builder.append(", ");
 				}
 			}
