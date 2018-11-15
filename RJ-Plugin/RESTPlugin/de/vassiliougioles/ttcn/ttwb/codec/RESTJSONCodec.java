@@ -218,10 +218,13 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TciCDProvided {
 		CharstringValue reasonPhrase = (CharstringValue) statusLine.getField("reasonPhrase");
 
 		statusCode.setInt(rm.getStatusCode());
-		reasonPhrase.setString(rm.getReasonPhrase());
-
 		statusLine.setField("statusCode", statusCode);
-		statusLine.setField("reasonPhrase", reasonPhrase);
+		
+		// REASON Phrase is optional
+		if(rm.getReasonPhrase() != null) {
+			reasonPhrase.setString(rm.getReasonPhrase());
+			statusLine.setField("reasonPhrase", reasonPhrase);
+		}
 		return _statusLine;
 	}
 

@@ -7,7 +7,7 @@ module Lib_Http {
 	}
 
 	type record StatusLine {
-		integer statusCode, charstring reasonPhrase
+		integer statusCode, charstring reasonPhrase optional
 	}
 
 	type record Body {
