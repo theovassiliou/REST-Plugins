@@ -1,6 +1,6 @@
 module Lib_Http {
 	type record HTTPResponse {
-		StatusLine statusLine, set of Header headers, Body body
+		StatusLine statusLine, set of Header headers, Body body optional
 	}
 	with {
 		encode "HTTP/response"
