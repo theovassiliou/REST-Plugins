@@ -2,7 +2,7 @@ module API_DB_Fahrplan_Example {
 	import from Lib_Http all;
 	import from Lib_JSON all;
 
-	const charstring BASE_URL := "https://api.deutschebahn.com/fahrplan-plus/v1";
+	const charstring BASE_URL := "https://api.deutschebahn.com/freeplan/v1";
 	const charstring AUTHORIZATION := "Authorization: Basic NOT DEFINED";
 
 	// The REST Calls

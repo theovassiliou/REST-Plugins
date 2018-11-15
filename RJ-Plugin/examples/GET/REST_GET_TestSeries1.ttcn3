@@ -1,8 +1,7 @@
 module REST_GET_TestSeries1 {
 	import from Lib_Http all;
 
-	import from API_DB_Fahrplan_Example all except {const AUTHORIZATION;};
-	import from DB_Fahrplan_Settings_Example all;
+	import from API_DB_Fahrplan_Example all;
 
 
 	template Location BerlinHbf := {
