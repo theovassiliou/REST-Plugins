@@ -1,8 +1,8 @@
 module REST_POST_TestSeries1 {
 	import from Lib_Http all;
 
-	import from API_DB_GraphQL_Example all except {const AUTHORIZATION;};
-	import from DB_Fahrplan_Settings_Example all;
+	import from API_DB_GraphQL_Example all;
+
 
 
 	testcase test_RESTPut_1()
