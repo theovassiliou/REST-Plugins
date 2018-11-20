@@ -340,8 +340,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 	}
 
 	
-	public Request createRequest(HttpClient client, String method, String authorization, String path) throws Exception {
-		
+	public Request createRequest(HttpClient client, String method, String authorization, String path, StringBuilder dumpMessage) throws Exception {
 		client.start();
 		Request request = null; 
 		switch(method) {
@@ -357,12 +356,48 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 			request = client.newRequest(path);
 		}
 			
+		
 		request = request.header("Accept", "application/json");
 
 		if (!authorization.equals(_DEFAULT_AUTHORIZATION_)) {
 			request = request.header("Authorization", authorization);
 		}
 		request = request.agent(_USER_AGENT_NAME_);
+		
+		dumpMessage.append(request.getVersion() + " " + request.getMethod()+" "+ request.getURI()+ request.getPath()+" " +"\n");
+		
+		HttpFields fields = request.getHeaders();
+
+		boolean hasTransferEncoding = false;
+		for (HttpField httpField : fields) {
+			hasTransferEncoding = false;
+			if (!httpField.getName().equals("Transfer-Encoding")) {
+				dumpMessage.append(httpField.getName()).append(": ");
+			}
+
+			String[] values = httpField.getValues();
+			for (int i = 0; i < values.length; i++) {
+				if (httpField.getName().equals("Transfer-Encoding") && values[i].equals("chunked")) {
+					hasTransferEncoding = true;
+					break;
+				} else if (httpField.getName().equals("Transfer-Encoding") && values[i].equals("chunked")) {
+					hasTransferEncoding = true;
+					logError("Unexpected Transfer-Encoding header. Value: " + values[i]);
+				} else {
+					dumpMessage.append(values[i]);
+					if (i < values.length - 1) {
+						dumpMessage.append(", ");
+					}
+				}
+			}
+			if (!hasTransferEncoding) {
+				dumpMessage.append("\n");
+			} else {
+			}
+		}
+
+		dumpMessage.append("\n");
+		
 		return request;
 	}
 	
