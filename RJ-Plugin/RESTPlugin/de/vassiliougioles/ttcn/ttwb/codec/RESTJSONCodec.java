@@ -361,9 +361,6 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 
 		if (!authorization.equals(_DEFAULT_AUTHORIZATION_)) {
 			request = request.header("Authorization", authorization);
-		} else {
-			// FIXME: handling issue if no auth-header given but requested. jett.send()
-			// throws exception
 		}
 		request = request.agent(_USER_AGENT_NAME_);
 		return request;

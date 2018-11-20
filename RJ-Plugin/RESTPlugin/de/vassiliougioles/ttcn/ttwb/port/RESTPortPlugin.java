@@ -134,8 +134,8 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 				triEnqueueMsg(tsiPortId, rcvSutAddress, componentId, rcvMessage);
 
 			} catch (Exception e1) {
-				e1.printStackTrace();
-				new TriStatusImpl(e1.getMessage());
+				logError("Failed to send request or to receive response.", e1);
+				new TriStatusImpl("An Error occured.");
 			}
 			
 			try {
