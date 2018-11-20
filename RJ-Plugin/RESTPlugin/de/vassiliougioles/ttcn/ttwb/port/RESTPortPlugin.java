@@ -343,8 +343,8 @@ public class RESTPortPlugin extends AbstractMsgBasedSA implements XPortPluginPro
 				if (!authorization.equals("NO AUTHORIZATION SET")) {
 					request = request.header("Authorization", authorization);
 				} else {
-					// FIXME: hanlding issue if no auth-header given but requested. jett.send()
-					// throws expection
+					// FIXME: handling issue if no auth-header given but requested. jett.send()
+					// throws exception
 				}
 
 				// request = request.header ("Content-Type", "application/json");
