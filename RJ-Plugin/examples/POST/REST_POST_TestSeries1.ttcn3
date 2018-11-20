@@ -5,19 +5,18 @@ module REST_POST_TestSeries1 {
 
 
 
-	testcase test_RESTPut_1()
-		runs on RESTComponent system DBRestService {
-		log("Check REST/put call towards DB");
+	testcase test_RESTPost_1() runs on RESTComponent system DBRestService {
 		map(mtc:p, system:s) param (config(AUTHORIZATION));
 		p.send(queryStation("8000105"));
 		timer t;
 		t.start(5.0);
 
 		alt {
-		[] p.receive(graphQLResponseExample1: {?, ?}) {
+		[] p.receive(graphQLResponseExample1:{?,?}) {
 				setverdict(pass);
 			}
-		[] p.receive(HTTPResponse:
+		[] p
+		   .receive(HTTPResponse:
 					{
 						statusLine := {statusCode := ?, reasonPhrase := ?},
 						headers := ?,
@@ -34,16 +33,14 @@ module REST_POST_TestSeries1 {
 			}
 		}
 	}
-	testcase test_RESTPut_2()
-		runs on RESTComponent system DBRestService {
-		log("Check REST/put call towards DB");
+	testcase test_RESTPost_2() runs on RESTComponent system DBRestService {
 		map(mtc:p, system:s) param (config(AUTHORIZATION));
 		p.send(queryStation("001"));
 		timer t;
 		t.start(5.0);
 
 		alt {
-		[] p.receive(graphQLResponseExample1: {?, ?}) {
+		[] p.receive(graphQLResponseExample1:{?,?}) {
 				setverdict(inconc);
 			}
 		[] p
@@ -65,16 +62,14 @@ module REST_POST_TestSeries1 {
 		}
 	}
 
-	testcase test_RESTPut_3()
-		runs on RESTComponent system DBRestService {
-		log("Check REST/put call towards DB");
+	testcase test_RESTPost_3() runs on RESTComponent system DBRestService {
 		map(mtc:p, system:s) param (config(AUTHORIZATION));
 		p.send(queryStation("abc"));
 		timer t;
 		t.start(5.0);
 
 		alt {
-		[] p.receive(graphQLResponseExample1:{?, ?}) {
+		[] p.receive(graphQLResponseExample1:{?,?}) {
 				setverdict(pass);
 			}
 		[] p
@@ -94,7 +89,7 @@ module REST_POST_TestSeries1 {
 				setverdict(fail);
 			}
 		}
-	}	
+	}
 }
 with {
 	encode "RESTfull/json"
