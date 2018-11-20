@@ -9,8 +9,7 @@ module REST_GET_TestSeries1 {
 	}
 
 
-	testcase test_SendingInt()
-		runs on RESTComponent system DBRestService {
+	testcase test_SendingInt() runs on RESTComponent system DBRestService {
 		map(mtc:p, system:s) param (config(AUTHORIZATION));
 
 		p.send(getLocation("Berlin"));
@@ -34,7 +33,6 @@ module REST_GET_TestSeries1 {
 
 	testcase test_RESTGetPathEncoding()
 		runs on RESTComponent system DBRestService {
-		log("Check REST/get call towards DB");
 		map(mtc:p, system:s) param (config(AUTHORIZATION));
 
 		p.send(getLocation("Berlin"));
@@ -57,9 +55,7 @@ module REST_GET_TestSeries1 {
 
 	testcase test_parameterizeMap() runs on RESTComponent system DBRestService {
 		map(mtc:p, system:s) param (config(AUTHORIZATION));
-
 		p.send(getLocation("Berlin Steglitz"));
-
 		timer t;
 		t.start(5.0);
 
@@ -80,9 +76,7 @@ module REST_GET_TestSeries1 {
 
 	testcase test_getArrivalBoard() runs on RESTComponent system DBRestService {
 		map(mtc:p, system:s) param (config(AUTHORIZATION));
-
 		p.send(getArrivalBoard("8011160", "2018-10-31"));
-
 		timer t;
 		t.start(5.0);
 
@@ -99,11 +93,13 @@ module REST_GET_TestSeries1 {
 			}
 		}
 	}
-	
-		testcase test_AuthorizationFlexibility() runs on RESTComponent system DBRestService {
+
+	testcase test_AuthorizationFlexibility()
+		runs on RESTComponent system DBRestService {
 		map(mtc:p, system:s) param (config("NO AUTHORIZATION SET"));
 
-		p.send(getArrivalBoard("8011160", "2018-10-31")) to config(AUTHORIZATION);
+		p.send(getArrivalBoard("8011160", "2018-10-31"))
+		to config(AUTHORIZATION);
 
 		timer t;
 		t.start(5.0);
@@ -121,14 +117,12 @@ module REST_GET_TestSeries1 {
 			}
 		}
 	}
-	
+
 
 	testcase test_getArrivalBoardResponse()
 		runs on RESTComponent system DBRestService {
 		map(mtc:p, system:s) param (config(AUTHORIZATION));
-
 		p.send(getArrivalBoard("801116550", "2018-1031"));
-
 		timer t;
 		t.start(5.0);
 		var integer v_int;
@@ -137,7 +131,13 @@ module REST_GET_TestSeries1 {
 				setverdict(pass);
 				t.stop;
 			}
-		[] p.receive(HTTPResponse:{ statusLine := { statusCode := 400, reasonPhrase := ?}, headers := ?, body := {?, ?}}) {
+		[] p
+		   .receive(HTTPResponse:
+					{
+						statusLine := {statusCode := 400, reasonPhrase := ?},
+						headers := ?,
+						body := {?, ?}
+					}) {
 				setverdict(pass);
 				t.stop;
 			}

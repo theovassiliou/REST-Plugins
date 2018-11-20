@@ -3,7 +3,7 @@ module API_DB_GraphQL_Example {
 	import from Lib_JSON all;
 
 	const charstring BASE_URL := "https://api.deutschebahn.com/1bahnql/v1";
-	const charstring AUTHORIZATION := "Authorization: Basic NOT DEFINED";
+	modulepar charstring AUTHORIZATION := "NO AUTHORIZATION SET"; // Example: "Bearer CCAAFFEE"
 
 	// The REST Calls
 	type record graphQL {
