@@ -1,15 +1,18 @@
 package de.vassiliougioles.ttcn.ttwb.codec;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
+import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
+import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.http.HttpField;
 import org.eclipse.jetty.http.HttpFields;
 import org.eclipse.jetty.http.HttpParser;
-import org.eclipse.jetty.http.HttpParser.ResponseHandler;
-import org.eclipse.jetty.http.HttpVersion;
 import org.etsi.ttcn.tci.CharstringValue;
 import org.etsi.ttcn.tci.FloatValue;
 import org.etsi.ttcn.tci.IntegerValue;
@@ -28,117 +31,9 @@ import org.json.simple.parser.ParseException;
 
 import com.testingtech.ttcn.tci.codec.base.AbstractBaseCodec;
 
-class ResponseMessage implements ResponseHandler {
-	private HttpFields headerFields = null;
-	private String content_ = null;
-	private HttpVersion httpVersion = null;
-	private int statusCode = 0;
-	private String reasonPhrase = null;
+import de.vassiliougioles.ttcn.ttwb.port.TTCNRESTMapping;
 
-	public ResponseMessage() {
-	}
-
-	@Override
-	public void badMessage(int arg0, String arg1) {
-		// TODO Auto-generated method stub
-		System.out.println("Are we in bad message?");
-	}
-
-	@Override
-	public boolean content(ByteBuffer arg0) {
-		content_ = null;
-		if (arg0.hasArray()) {
-
-			// content_ = StandardCharsets.UTF_8.decode(arg0).toString();
-
-			content_ = new String(arg0.array(), arg0.arrayOffset() + arg0.position(), arg0.remaining());
-
-		} else {
-			// content_ = StandardCharsets.UTF_8.decode(arg0).toString();
-
-			final byte[] b = new byte[arg0.remaining()];
-			arg0.duplicate().get(b);
-			content_ = new String(b);
-
-		}
-		return true;
-	}
-
-	@Override
-	public boolean contentComplete() {
-		if (content_ != null)
-			return true;
-		return true;
-	}
-
-	@Override
-	public void earlyEOF() {
-		// TODO: No clue what to do
-		System.out.println("are we in earlyEOF?");
-	}
-
-	@Override
-	public int getHeaderCacheSize() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public boolean headerComplete() {
-		// TODO Auto-generated method stub
-		return true;
-	}
-
-	@Override
-	public boolean messageComplete() {
-		// TODO Auto-generated method stub
-		return true;
-	}
-
-	@Override
-	public void parsedHeader(HttpField arg0) {
-		// TODO Auto-generated method stub
-		if (headerFields == null) {
-			headerFields = new HttpFields();
-		}
-		headerFields.add(arg0);
-	}
-
-	@Override
-	public boolean startResponse(HttpVersion arg0, int arg1, String arg2) {
-		httpVersion = arg0;
-		setStatusCode(arg1);
-		setReasonPhrase(arg2);
-		return true;
-	}
-
-	public HttpFields getHeaderFields() {
-		return headerFields;
-	}
-
-	public String getContent() {
-		return content_;
-	}
-
-	public int getStatusCode() {
-		return statusCode;
-	}
-
-	public void setStatusCode(int statusCode) {
-		this.statusCode = statusCode;
-	}
-
-	public String getReasonPhrase() {
-		return reasonPhrase;
-	}
-
-	public void setReasonPhrase(String reasonPhrase) {
-		this.reasonPhrase = reasonPhrase;
-	}
-
-}
-
-public class RESTJSONCodec extends AbstractBaseCodec implements TciCDProvided {
+public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping, TciCDProvided {
 
 	static private JSONParser parser = new JSONParser();
 
@@ -147,22 +42,22 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TciCDProvided {
 		ResponseMessage rm = new ResponseMessage();
 		HttpParser hParser = new HttpParser(rm);
 		ByteBuffer bb = ByteBuffer.wrap(rcvdMessage.getEncodedMessage());
-		
+
 		while (!hParser.isComplete()) {
 			hParser.parseNext(bb);
 		}
 
 		HttpFields headers = rm.getHeaderFields();
-		
-		if (decodingHypothesis.getTypeEncoding().equals("REST/getResponse")
-				|| decodingHypothesis.getTypeEncoding().equals("REST/postResponse")) {
+
+		if (decodingHypothesis.getTypeEncoding().equals(_GET_RESPONSE_ENCODING_NAME_)
+				|| decodingHypothesis.getTypeEncoding().equals(_POST_RESPONSE_ENCODING_NAME_)) {
 			try {
 				RecordValue value = (RecordValue) decodingHypothesis.newInstance();
 				String[] responseFieldsNames = value.getFieldNames();
-				
+
 				for (int i = 0; i < responseFieldsNames.length; i++) {
 					Value aField = value.getField(responseFieldsNames[i]);
-					if(aField.getValueEncoding().equals("body/JSON")) {
+					if (aField.getValueEncoding().equals(_BODY_FIELD_ENCODING_NAME_)) {
 						Object obj;
 						if (rm.getContent() != null) {
 							obj = parser.parse(rm.getContent());
@@ -173,21 +68,21 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TciCDProvided {
 							if (mappedObject == null)
 								return null;
 							value.setField(responseFieldsNames[i], mappedObject);
-						}		
-					} else if (aField.getValueEncoding().startsWith("header")) {
+						}
+					} else if (aField.getValueEncoding().startsWith(_HEADER_FIELD_ENCODING_PREFIX_)) {
 						String headerSpec = aField.getValueEncoding();
 						headerSpec = headerSpec.split("/")[1].trim();
 						HttpField hField = headers.getField(headerSpec);
-						if(hField == null) {
+						if (hField == null) {
 							value.setFieldOmitted(responseFieldsNames[i]);
 							continue; // Header not included
 						}
 						String headerValue = hField.getValue();
-						if(headerValue != null ) { // TODO: Check that the variant indicates string encoding
+						if (headerValue != null) { // TODO: Check that the variant indicates string encoding
 							((UniversalCharstringValue) aField).setString(headerValue);
 							value.setField(responseFieldsNames[i], aField);
 						}
-					} else {	
+					} else {
 						return value;
 					}
 				}
@@ -196,7 +91,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TciCDProvided {
 				// Well, if we can't parse it, we can't parse it.
 				return null;
 			}
-		} else if (decodingHypothesis.getTypeEncoding().equals("HTTP/response")) {
+		} else if (decodingHypothesis.getTypeEncoding().equals(_HTTP_RESPONSE_ENCODING_NAME_)) {
 			RecordValue httpResponseValue = (RecordValue) decodingHypothesis.newInstance();
 			httpResponseValue.setField("statusLine", decodeStatusLine(httpResponseValue.getField("statusLine"), rm));
 			httpResponseValue.setField("headers", decodeHeader(httpResponseValue.getField("headers"), rm));
@@ -333,14 +228,6 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TciCDProvided {
 
 	}
 
-	private void assertion(String template, String value) {
-		if (!template.equals(value)) {
-			// logError("AssertionError: " + value + " expected to be " + template);
-			System.out.println("AssertionError: " + value + " expected to be " + template);
-			tciErrorReq("AssertionError: " + value + " expected to be " + template);
-		}
-	}
-
 	@Override
 	public synchronized TriMessage encode(Value template) {
 		// Let's try to iterate over a given record
@@ -349,6 +236,191 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TciCDProvided {
 			break;
 		}
 		return super.encode(template);
+	}
+
+	
+	public String createJSONBody(RecordValue restMessage ) {
+		Value fieldToEncode = null;
+		String[] fieldNames = restMessage.getFieldNames();
+		for (int i = 0; i < fieldNames.length; i++) {
+			String string = fieldNames[i];
+			Value field = restMessage.getField(string);
+			if (field.getValueEncoding().equals(_BODY_FIELD_ENCODING_NAME_)) {
+				// TODO: ignoring other fields for the time being
+				fieldToEncode = field;
+			}
+		}
+
+		String theJSON = null;
+		if (fieldToEncode != null) {
+			theJSON = TTCN2JSONencode(fieldToEncode);
+		}
+
+
+		return theJSON; 
+	}
+	
+	
+	public void encodeResponseMessage(ContentResponse response, StringBuilder builder) {
+		builder.append(response.getVersion() + " ").append(response.getStatus()).append(" ")
+				.append(response.getReason()).append("\n");
+
+		HttpFields fields = response.getHeaders();
+
+		boolean hasTransferEncoding = false;
+		for (HttpField httpField : fields) {
+			hasTransferEncoding = false;
+			if (!httpField.getName().equals("Transfer-Encoding")) {
+				builder.append(httpField.getName()).append(": ");
+			}
+
+			String[] values = httpField.getValues();
+			for (int i = 0; i < values.length; i++) {
+				if (httpField.getName().equals("Transfer-Encoding") && values[i].equals("chunked")) {
+					hasTransferEncoding = true;
+					break;
+				} else if (httpField.getName().equals("Transfer-Encoding") && values[i].equals("chunked")) {
+					hasTransferEncoding = true;
+					logError("Unexpected Transfer-Encoding header. Value: " + values[i]);
+				} else {
+					builder.append(values[i]);
+					if (i < values.length - 1) {
+						builder.append(", ");
+					}
+				}
+			}
+			if (!hasTransferEncoding) {
+				builder.append("\n");
+			} else {
+				builder.append("Content-Length: ").append(response.getContent().length).append("\n");
+			}
+		}
+
+		builder.append("\n").append(response.getContentAsString()).append("\n");
+		builder.append("\n");
+	}
+	
+	private String TTCN2JSONencode(Value fieldToEncode) {
+		StringBuilder builder = new StringBuilder();
+
+		switch (fieldToEncode.getType().getTypeClass()) {
+		case TciTypeClass.RECORD:
+			builder.append("{ ");
+			RecordValue rv = (RecordValue) fieldToEncode;
+			String[] fieldNames = rv.getFieldNames();
+			for (int i = 0; i < fieldNames.length; i++) {
+				builder.append(String2JSON(fieldNames[i])).append(": ");
+				builder.append(TTCN2JSONencode(rv.getField(fieldNames[i])));
+				if (i < fieldNames.length - 1) {
+					builder.append(", ");
+				}
+			}
+			builder.append(" }");
+			break;
+		case TciTypeClass.CHARSTRING:
+			builder.append(String2JSON(((CharstringValue) fieldToEncode).getString()));
+			break;
+		case TciTypeClass.UNIVERSAL_CHARSTRING:
+			builder.append(String2JSON(((UniversalCharstringValue) fieldToEncode).getString()));
+			break;
+		case TciTypeClass.INTEGER:
+			builder.append(((IntegerValue) fieldToEncode).getInt());
+			break;
+		case TciTypeClass.FLOAT:
+			builder.append(((FloatValue) fieldToEncode).getFloat());
+			break;
+		}
+
+		return builder.toString();
+	}
+
+	private String String2JSON(String string) {
+		// TODO Auto-generated method stub
+		return new String("\"" + string + "\"");
+	}
+
+	
+	public Request createRequest(HttpClient client, String method, String authorization, String path) throws Exception {
+		
+		client.start();
+		Request request = null; 
+		switch(method) {
+		case "GET":
+			request = client.newRequest(path);
+			break;
+		case "POST":
+			request = client.POST(path);
+			break;
+		default:
+			logError("Unsupported method. Using GET instead");
+			method = "GET";
+			request = client.newRequest(path);
+		}
+			
+		request = request.header("Accept", "application/json");
+
+		if (!authorization.equals(_DEFAULT_AUTHORIZATION_)) {
+			request = request.header("Authorization", authorization);
+		} else {
+			// FIXME: handling issue if no auth-header given but requested. jett.send()
+			// throws exception
+		}
+		request = request.agent(_USER_AGENT_NAME_);
+		return request;
+	}
+	
+	
+	/**
+	 * Encodes path elements of a REST message 
+	 * @param restMessage 		the REST message
+	 * @param baseUrl	 		a non-null default baseURL to be used 	
+	 * @return the path to be used for the REST message, or null if some error occurred 
+	 */
+	public String encodePath(RecordValue restMessage, String baseURL) {
+		
+		// path has form: path: /location/{locationName} or
+		// /arrivalBoard/{id}?date={date}
+		// with
+		// path: stating this is a path
+		// "/location/" stating the path
+		// {locationName} that the value of field "locationName" should be taken
+		String path = restMessage.getType().getTypeEncodingVariant();
+		if (!path.startsWith(_REQUEST_PATH_VARIANT_PREFIX_)) {
+			logError("We only support path encoding variants for REST messages");
+			return null ;
+		}
+
+		// so we only have paths so far
+		path = path.split(":")[1].trim();
+
+		String[] pathParams = StringUtils.substringsBetween(path, "{", "}");
+		String instantiatedPath = new String(path.toString());
+		if (pathParams != null) {
+			for (String param : pathParams) {
+				try {
+					assert ((StringUtils.countMatches(restMessage.getField(param).toString(), "\"")
+							% 2) == 0) : "Uneven occurence of \". FIX handling.";
+					if(!((restMessage.getField(param).getType().getTypeClass() == TciTypeClass.CHARSTRING) || restMessage
+							.getField(param).getType()
+							.getTypeClass() == TciTypeClass.UNIVERSAL_CHARSTRING)) {
+								logError("Only supporting Universal Charstring or Charstring Fields so far.");
+								return null;
+							}
+					
+
+					String uriEncodedFieldValue = ((UniversalCharstringValue) restMessage.getField(param)).getString()
+							.replace("+", "%2");
+					instantiatedPath = StringUtils.replace(instantiatedPath, "{" + param + "}",
+							URLEncoder.encode(uriEncodedFieldValue, "UTF-8").replace("+", "%20"));
+				} catch (UnsupportedEncodingException e) {
+					logError("Unsupported Encoding execption", e);
+					return null;
+				}
+			}
+		}
+		
+		return  baseURL + instantiatedPath;
+		
 	}
 
 }
