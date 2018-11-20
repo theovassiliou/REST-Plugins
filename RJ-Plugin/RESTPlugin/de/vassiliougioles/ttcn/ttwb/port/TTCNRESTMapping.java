@@ -19,7 +19,7 @@ public interface TTCNRESTMapping {
 	final String _POST_RESPONSE_ENCODING_NAME_ = "REST/postResponse";
 	final String _HTTP_RESPONSE_ENCODING_NAME_ = "HTTP/response";
 
-	
-	final String _BODY_FIELD_ENCODING_NAME_ = "body/JSON";
 	final String _HEADER_FIELD_ENCODING_PREFIX_ = "header";
+	final String _BODY_FIELD_ENCODING_NAME_ = "body/JSON";
+	
 }
