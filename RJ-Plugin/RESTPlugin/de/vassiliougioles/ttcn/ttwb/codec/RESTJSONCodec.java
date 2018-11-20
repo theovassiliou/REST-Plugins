@@ -30,6 +30,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import com.testingtech.ttcn.tci.codec.base.AbstractBaseCodec;
+import com.testingtech.ttcn.tri.TriMessageImpl;
 
 import de.vassiliougioles.ttcn.ttwb.port.TTCNRESTMapping;
 
@@ -230,11 +231,20 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 
 	@Override
 	public synchronized TriMessage encode(Value template) {
-		// Let's try to iterate over a given record
-		switch (template.getType().getTypeClass()) {
-		case TciTypeClass.RECORD:
-			break;
+		System.out.println("ARE WE HERE IN ENCODE with TEMPLATE" + template);
+		if(template.getType().getTypeEncoding().equals(_GET_ENCODING_NAME_)) {
+			final String strURL =  encodePath((RecordValue) template, null);
+			HttpClient httpClient = new HttpClient();
+			try {
+				Request request = createRequest(httpClient, "GET", null, strURL);
+				return TriMessageImpl.valueOf(request.toString().getBytes());
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
 		}
+	
 		return super.encode(template);
 	}
 
@@ -374,6 +384,9 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 	 * @return the path to be used for the REST message, or null if some error occurred 
 	 */
 	public String encodePath(RecordValue restMessage, String baseURL) {
+		if(baseURL == null) {
+			baseURL = "";
+		}
 		
 		// path has form: path: /location/{locationName} or
 		// /arrivalBoard/{id}?date={date}
