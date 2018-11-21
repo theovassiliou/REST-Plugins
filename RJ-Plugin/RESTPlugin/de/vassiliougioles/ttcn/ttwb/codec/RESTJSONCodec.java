@@ -62,11 +62,11 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 						if (rm.getContent() != null) {
 							obj = parser.parse(rm.getContent());
 							if (obj == null)
-								return null; // Can't create a JSON object
+								continue; // Can't create a JSON object
 							Value rov = (Value) value.getField(responseFieldsNames[i]);
 							Value mappedObject = mapJSON(rov, obj);
 							if (mappedObject == null)
-								return null;
+								continue;
 							value.setField(responseFieldsNames[i], mappedObject);
 						}
 					} else if (aField.getValueEncoding().startsWith(_HEADER_FIELD_ENCODING_PREFIX_)) {
