@@ -96,6 +96,7 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 			try {
 				httpClient.start();
 				Request request = restCodec.createRequest(httpClient,  "GET", authorization,strURL, dumpMessage);
+				restCodec.createHeaderFields(request,restGET, dumpMessage);
 				System.out.println("---------");
 				System.out.println("Message send:");
 				System.out.println(dumpMessage);
@@ -125,9 +126,9 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 			try {
 				httpClient.start();
 				Request request = restCodec.createRequest(httpClient,  "POST", authorization,strURL, dumpMessage);
-
+				restCodec.createHeaderFields(request,restPOST, dumpMessage);
 				request.content(new StringContentProvider(restCodec.createJSONBody(restPOST), "UTF-8"), _CONTENT_ENCODING_);
-				dumpMessage.append(restCodec.createJSONBody(restPOST));
+				dumpMessage.append("\n" + restCodec.createJSONBody(restPOST));
 				System.out.println("---------");
 				System.out.println("Message send:");
 				System.out.println(dumpMessage);

@@ -9,13 +9,15 @@ module API_DB_GraphQL_Example {
 	type record graphQL {
 		record {
 			string query
-		} body
+		} body,
+		string testChallange optional
 	}
 	with {
 		encode "REST/post";
 		variant "path: /graphql";
 		encode (body) "body/JSON";
-		variant (body) "niu - not in use"
+		encode (testChallange) "header/TestChallange";
+		
 	}
 
 	template graphQL queryStation(string id) := {
@@ -23,7 +25,8 @@ module API_DB_GraphQL_Example {
 			query :=
 				"{stationWithEvaId(evaId: " & id &
 				") { name location { latitude longitude }  picture { url } } }"
-		}
+		},
+		testChallange := omit
 	}
 	// { "query": "{stationWithEvaId(evaId: 8000105) { name location { latitude
 	// longitude }  picture { url } } }" }
