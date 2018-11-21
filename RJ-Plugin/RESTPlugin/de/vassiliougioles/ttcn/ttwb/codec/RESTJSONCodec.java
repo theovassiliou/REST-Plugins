@@ -340,6 +340,27 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 	}
 
 	
+	public Request createHeaderFields(Request request, RecordValue restMessage, StringBuilder dumpMessage) {
+		String[] allFields = restMessage.getFieldNames();
+		for (int i = 0; i < allFields.length; i++) {
+			String aFieldName = allFields[i];
+			Value rField = restMessage.getField(aFieldName);
+			if(rField.getValueEncoding().startsWith(_HEADER_FIELD_ENCODING_PREFIX_) && !(rField.notPresent())) {
+				
+				String headerSpec = rField.getValueEncoding();
+				headerSpec = headerSpec.split("/")[1].trim();
+				if(rField.getType().getTypeClass() == TciTypeClass.UNIVERSAL_CHARSTRING) {
+					String headerValue = ((UniversalCharstringValue) rField).getString();
+					request.header(headerSpec, headerValue);
+					dumpMessage.append(headerSpec+": " + headerValue + "\n");
+				} 
+			}
+		}
+		return request;
+	}
+
+	
+	
 	public Request createRequest(HttpClient client, String method, String authorization, String path, StringBuilder dumpMessage) throws Exception {
 		client.start();
 		Request request = null; 
@@ -395,8 +416,6 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 			} else {
 			}
 		}
-
-		dumpMessage.append("\n");
 		
 		return request;
 	}

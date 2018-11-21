@@ -76,7 +76,9 @@ module REST_GET_TestSeries1 {
 
 	testcase test_getArrivalBoard() runs on RESTComponent system DBRestService {
 		map(mtc:p, system:s) param (config(AUTHORIZATION));
-		p.send(getArrivalBoard("8011160", "2018-10-31"));
+		p
+		.send(modifies getArrivalBoard("8011160", "2018-10-31") :=
+			  {testChallange := "0xCAFFEE"});
 		timer t;
 		t.start(5.0);
 
@@ -128,7 +130,7 @@ module REST_GET_TestSeries1 {
 		var integer v_int;
 		alt {
 		[] p.receive(GetArrivalBoard_Response:{boards := ?}) {
-				setverdict(pass);
+				setverdict(fail);
 				t.stop;
 			}
 		[] p

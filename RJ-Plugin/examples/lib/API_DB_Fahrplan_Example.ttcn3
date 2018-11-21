@@ -16,20 +16,23 @@ module API_DB_Fahrplan_Example {
 	}
 
 	type record LocationResponse {
-		set of Location locations
+		set of Location locations,
+		string testChallange optional
 	}
 	with {
 		encode "REST/getResponse";
 		encode (locations) "body/JSON"
+		encode (testChallange) "header/TestChallange"
 	}
 
 
 	type record GetArrivalBoard {
-		string id, dateISO8601 date
+		string id, dateISO8601 date, string testChallange optional
 	}
 	with {
 		encode "REST/get";
 		variant "path: /arrivalBoard/{id}?date={date}"
+		encode (testChallange) "header/TestChallange"
 	}
 
 	type record GetArrivalBoard_Response {
@@ -62,7 +65,7 @@ module API_DB_Fahrplan_Example {
 
 	template GetLocation getLocation(string _name) := {locationName := _name}
 	template GetArrivalBoard getArrivalBoard(string _id, dateISO8601 _date) := {
-		id := _id, date := _date
+		id := _id, date := _date, testChallange := omit
 	}
 
 	type port RESTfull message {

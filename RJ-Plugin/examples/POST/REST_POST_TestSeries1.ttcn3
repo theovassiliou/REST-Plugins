@@ -7,7 +7,7 @@ module REST_POST_TestSeries1 {
 
 	testcase test_RESTPost_1() runs on RESTComponent system DBRestService {
 		map(mtc:p, system:s) param (config(AUTHORIZATION));
-		p.send(queryStation("8000105"));
+		p.send(modifies queryStation("8000105") := { testChallange := "0xCAFFEE" });
 		timer t;
 		t.start(5.0);
 
@@ -22,7 +22,7 @@ module REST_POST_TestSeries1 {
 						headers := ?,
 						body := {?, ?}
 					}) {
-				setverdict(pass);
+				setverdict(fail);
 				t.stop;
 			}
 		[] p.receive {
@@ -70,7 +70,7 @@ module REST_POST_TestSeries1 {
 
 		alt {
 		[] p.receive(graphQLResponseExample1:{?,?}) {
-				setverdict(pass);
+				setverdict(fail);
 			}
 		[] p
 		   .receive(HTTPResponse:
