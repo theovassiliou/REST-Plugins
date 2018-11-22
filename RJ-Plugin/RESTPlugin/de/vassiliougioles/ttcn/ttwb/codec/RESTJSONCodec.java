@@ -247,7 +247,6 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 			String string = fieldNames[i];
 			Value field = restMessage.getField(string);
 			if (field.getValueEncoding().equals(_BODY_FIELD_ENCODING_NAME_)) {
-				// TODO: ignoring other fields for the time being
 				fieldToEncode = field;
 			}
 		}
