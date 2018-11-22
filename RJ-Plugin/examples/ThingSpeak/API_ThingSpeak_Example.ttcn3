@@ -13,7 +13,7 @@ module API_ThingSpeak_Example {
 		integer results optional, // Number of entries to retrieve. The maximum number is 8,000
 		integer days optional, // Number of 24-hour periods before now to include in response. The default is 1.
 		integer minutes optional, // Number of 60-second periods before now to include in response. The default is 1440.
-		string start optional, // Start date in format YYYY-MM-DD%20HH:NN:SS.
+		string _start optional // Start date in format YYYY-MM-DD%20HH:NN:SS.
 		
 	}
 	with {
@@ -23,7 +23,8 @@ module API_ThingSpeak_Example {
 		encode (results) "param";
 		encode (days) "param";
 		encode (minutes) "param";
-		encode (start) "param";
+		encode (_start) "param";
+		variant (_start) "start";
 	}
 
 	type record ReadDataResponse {
@@ -61,7 +62,7 @@ module API_ThingSpeak_Example {
 
 	type port RESTfull message {
 		out ReadData; 
-		in ReadData_Response;
+		in ReadDataResponse;
 		in HTTPResponse;
 		map param (RESTAPIconfig config);
 	}
