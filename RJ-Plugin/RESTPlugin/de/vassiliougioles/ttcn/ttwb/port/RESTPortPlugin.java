@@ -173,7 +173,7 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 				if (string.equals(_CONFIG_BASEURL_FIELD_NAME_)) {
 					UniversalCharstringValue cv = (UniversalCharstringValue) rv.getField(string);
 					baseURL = cv.getString();
-				} else if (string.equals(_CONFIG_AUTH_FIELD_NAME_)) {
+				} else if (string.equals(_CONFIG_AUTH_FIELD_NAME_) &&  !rv.getField(string).notPresent()) {
 					UniversalCharstringValue cv = (UniversalCharstringValue) rv.getField(string);
 					authorization = cv.getString();
 				}
