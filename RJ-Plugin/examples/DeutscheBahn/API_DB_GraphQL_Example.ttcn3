@@ -10,13 +10,15 @@ module API_DB_GraphQL_Example {
 		record {
 			string query
 		} body,
-		string testChallange optional
+		string testChallange optional,
+		string accept optional
 	}
 	with {
 		encode "REST/post";
-		variant "path: /graphql";
+		variant "path:/graphql";
 		encode (body) "body/JSON";
-		encode (testChallange) "header/TestChallange";
+		encode (testChallange) "header:.";
+		encode (accept) "header:Accept";
 		
 	}
 
@@ -26,7 +28,8 @@ module API_DB_GraphQL_Example {
 				"{stationWithEvaId(evaId: " & id &
 				") { name location { latitude longitude }  picture { url } } }"
 		},
-		testChallange := omit
+		testChallange := omit,
+		accept := "application/json; application/xml"
 	}
 	// { "query": "{stationWithEvaId(evaId: 8000105) { name location { latitude
 	// longitude }  picture { url } } }" }
@@ -54,7 +57,7 @@ module API_DB_GraphQL_Example {
 	with {
 		encode "REST/postResponse";
 		encode (response) "body/JSON"; // decodes the Body as JSON into this field
-		encode (etag) "header/ETag"; //
+		encode (etag) "header:ETag"; //
 	}
 
 	type record Example1Response {
