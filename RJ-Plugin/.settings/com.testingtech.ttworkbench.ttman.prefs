@@ -26,6 +26,6 @@ verdict_filter_fail=true
 verdict_filter_incinc=true
 verdict_filter_none=true
 verdict_filter_pass=true
-vm_arguments=-ea
+vm_arguments=-ea -javaagent\:tt3plugins/RJPlugin/lib/jSSLKeyLog.jar\="C\:\\tmp\\ssllog.log"
 vm_arguments_enabled=true
 warning_for_main_log_errors=true

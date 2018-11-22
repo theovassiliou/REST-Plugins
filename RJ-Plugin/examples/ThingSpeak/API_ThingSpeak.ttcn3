@@ -1,0 +1,127 @@
+module API_ThingSpeak {
+	import from Lib_Http all;
+	import from Lib_JSON all;
+	// import from ThingSpeak_Settings all;
+
+	const charstring BASE_URL := "https://api.thingspeak.com";
+
+	// The REST Calls
+	type record ReadData {
+		string channelId,
+		string api_key optional, // mandatory for private channels
+		integer results optional, // Number of entries to retrieve. The maximum
+								  // number is 8,000
+		integer days optional, // Number of 24-hour periods before now to
+							   // include in response. The default is 1.
+		integer minutes optional, // Number of 60-second periods before now to
+								  // include in response. The default is 1440.
+		string _start
+		 optional // Start date in format YYYY-MM-DD%20HH:NN:SS.
+	}
+	with {
+		encode "REST/get";
+		variant "path:/channels/{channelId}/feeds.json";
+		encode (api_key) "param:.";
+		encode (results) "param:.";
+		encode (days) "param:.";
+		encode (minutes) "param:.";
+		encode (_start) "param:start";
+	}
+
+	type record ReadDataResponse {
+		record {
+			ChannelObj channel, record of Feed feeds
+		} channelFeed
+	}
+	with {
+		encode "REST/getResponse";
+		encode (channelFeed) "body/JSON"
+	}
+
+	type record ChannelObj {
+		string id,
+		string name,
+		string description optional,
+		float latitude,
+		float longitude,
+		string field1,
+		string field2,
+		string created_at,
+		string updated_at,
+		integer last_entry_id
+	}
+	with {
+		variant (name) "name"
+	}
+
+	type record Feed {
+		string created_at, string entry_id, string field1 optional, string field2 optional
+	}
+
+
+	type record ReadField {
+		string channelId,
+		string fieldId,
+		string api_key optional, // mandatory for private channels
+		integer results optional, // Number of entries to retrieve. The maximum
+								  // number is 8,000
+		integer days optional, // Number of 24-hour periods before now to
+							   // include in response. The default is 1.
+		integer minutes optional, // Number of 60-second periods before now to
+								  // include in response. The default is 1440.
+		string _start
+		 optional // Start date in format YYYY-MM-DD%20HH:NN:SS.
+	}
+	with {
+		encode "REST/get";
+		variant "path:/channels/{channelId}/fields/{fieldId}.json";
+		encode (api_key) "param:.";
+		encode (results) "param:.";
+		encode (days) "param:.";
+		encode (minutes) "param:.";
+		encode (_start) "param:start";
+	}
+
+	type record ReadFieldResponse {
+		record {
+			ChannelObj channel, record of Feed feeds
+		} channelFeed
+	}
+	with {
+		encode "REST/getResponse";
+		encode (channelFeed) "body/JSON"
+	}
+
+
+
+
+	type port RESTfull message {
+		out ReadData, ReadField;
+		in ReadDataResponse, ReadFieldResponse;
+		in HTTPResponse;
+		map param (RESTAPIconfig config);
+	}
+
+	type record RESTAPIconfig {
+		string baseUrl, string authorization optional
+	}
+
+	template RESTAPIconfig config := {
+		baseUrl := BASE_URL, authorization := omit
+	}
+
+	type record ChannelConfig {
+		charstring channel_id, charstring api_key
+	}
+
+	type component RESTComponent {
+		port RESTfull p;
+	}
+
+	type component TSRestService {
+		port RESTfull s;
+	}
+}
+with {
+	encode "RESTfull/json"
+}

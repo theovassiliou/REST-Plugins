@@ -76,6 +76,7 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 		assert tsiPortId.getPortTypeName().split("\\.")[1]
 				.equals(_PORT_TYPE_NAME_) : "We only handle operations on " + _PORT_TYPE_NAME_ + " ports";
 
+		StringBuilder dumpMessage = new StringBuilder();
 		extractSendToInformation(sutAddress);
 
 		// check whether encode is REST/get
@@ -94,12 +95,17 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 			// Start HttpClient
 			try {
 				httpClient.start();
-
-				ContentResponse response = restCodec.createRequest(httpClient,  "GET", authorization,strURL).send();
+				Request request = restCodec.createRequest(httpClient,  "GET", authorization,strURL, dumpMessage);
+				restCodec.createHeaderFields(request,restGET, dumpMessage);
+				System.out.println("---------");
+				System.out.println("Message send:");
+				System.out.println(dumpMessage);
+				System.out.println("---------");
+				
+				ContentResponse response = request.send();
 
 				StringBuilder builder = new StringBuilder();
 				restCodec.encodeResponseMessage(response, builder);
-				System.out.println(builder.toString());
 				TriMessage rcvMessage = TriMessageImpl.valueOf(builder.toString().getBytes(StandardCharsets.UTF_8));
 				// enqueue the URL as response address to be able to identify it in TTCN-3
 				TriAddressImpl rcvSutAddress = new TriAddressImpl(strURL.getBytes());
@@ -119,15 +125,19 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 			httpClient.setFollowRedirects(false);
 			try {
 				httpClient.start();
-				Request request = restCodec.createRequest(httpClient,  "POST", authorization,strURL);
-								
+				Request request = restCodec.createRequest(httpClient,  "POST", authorization,strURL, dumpMessage);
+				restCodec.createHeaderFields(request,restPOST, dumpMessage);
 				request.content(new StringContentProvider(restCodec.createJSONBody(restPOST), "UTF-8"), _CONTENT_ENCODING_);
+				dumpMessage.append("\n" + restCodec.createJSONBody(restPOST));
+				System.out.println("---------");
+				System.out.println("Message send:");
+				System.out.println(dumpMessage);
+				System.out.println("---------");
 				
 				ContentResponse response = request.send();
 
 				StringBuilder builder = new StringBuilder();
 				restCodec.encodeResponseMessage(response, builder);
-				System.out.println(builder.toString());
 				TriMessage rcvMessage = TriMessageImpl.valueOf(builder.toString().getBytes(StandardCharsets.UTF_8));
 				// enqueue the URL as response address to be able to identify it in TTCN-3
 				TriAddressImpl rcvSutAddress = new TriAddressImpl(strURL.getBytes());
@@ -163,7 +173,7 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 				if (string.equals(_CONFIG_BASEURL_FIELD_NAME_)) {
 					UniversalCharstringValue cv = (UniversalCharstringValue) rv.getField(string);
 					baseURL = cv.getString();
-				} else if (string.equals("authorization")) {
+				} else if (string.equals(_CONFIG_AUTH_FIELD_NAME_) &&  !rv.getField(string).notPresent()) {
 					UniversalCharstringValue cv = (UniversalCharstringValue) rv.getField(string);
 					authorization = cv.getString();
 				}

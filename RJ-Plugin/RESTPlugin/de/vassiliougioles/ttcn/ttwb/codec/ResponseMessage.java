@@ -19,7 +19,6 @@ class ResponseMessage implements ResponseHandler {
 
 	@Override
 	public void badMessage(int arg0, String arg1) {
-		// TODO Auto-generated method stub
 		System.out.println("Are we in bad message?");
 	}
 
@@ -52,31 +51,26 @@ class ResponseMessage implements ResponseHandler {
 
 	@Override
 	public void earlyEOF() {
-		// TODO: No clue what to do
 		System.out.println("are we in earlyEOF?");
 	}
 
 	@Override
 	public int getHeaderCacheSize() {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	@Override
 	public boolean headerComplete() {
-		// TODO Auto-generated method stub
 		return true;
 	}
 
 	@Override
 	public boolean messageComplete() {
-		// TODO Auto-generated method stub
 		return true;
 	}
 
 	@Override
 	public void parsedHeader(HttpField arg0) {
-		// TODO Auto-generated method stub
 		if (headerFields == null) {
 			headerFields = new HttpFields();
 		}
