@@ -1,0 +1,89 @@
+module API_ThingSpeak_Example {
+	import from Lib_Http all;
+	import from Lib_JSON all;
+
+	const charstring BASE_URL := "https://api.thingspeak.com/";
+	modulepar charstring AUTHORIZATION := "NO AUTHORIZATION SET"; // Example: "Bearer CCAAFFEE"
+
+	// The REST Calls
+	
+	type record ReadData {
+		string channelId,
+		string api_key optional, // mandatory for private channels
+		integer results optional, // Number of entries to retrieve. The maximum number is 8,000
+		integer days optional, // Number of 24-hour periods before now to include in response. The default is 1.
+		integer minutes optional, // Number of 60-second periods before now to include in response. The default is 1440.
+		string start optional, // Start date in format YYYY-MM-DD%20HH:NN:SS.
+		
+	}
+	with {
+		encode "REST/get";
+		variant "path: /channel/{channelId}/feeds.json";
+		encode (api_key) "param";
+		encode (results) "param";
+		encode (days) "param";
+		encode (minutes) "param";
+		encode (start) "param";
+	}
+
+	type record ReadDataResponse {
+		record {
+			ChannelObj channel,
+			record of Feed feeds
+		} channelFeed
+	}
+	with {
+		encode "REST/getResponse";
+		encode (channelFeed) "body/JSON"
+	}
+	
+	type record ChannelObj {
+			string id,
+			string name,
+			string description,
+			float latitude,
+			float longitude,
+			string field1,
+			string field2,
+			string created_at,
+			string updated_at,
+			integer last_entry_id
+	} with {
+		variant (name) "name"
+	}
+
+	type record Feed {
+		string created_at,
+		string entry_id,
+		float field1,
+		float field2
+	}
+
+	type port RESTfull message {
+		out ReadData; 
+		in ReadData_Response;
+		in HTTPResponse;
+		map param (RESTAPIconfig config);
+	}
+
+	type record RESTAPIconfig {
+		string baseUrl,
+		string authorization optional
+	}
+	
+	template  RESTAPIconfig config(string auth) := {
+		baseUrl := BASE_URL,
+		authorization := auth
+	}
+	
+	type component RESTComponent {
+		port RESTfull p;
+	}
+
+	type component DBRestService {
+		port RESTfull s;
+	}
+}
+with {
+	encode "RESTfull/json"
+}
