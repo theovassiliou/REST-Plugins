@@ -79,7 +79,8 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 							continue; // Header not included
 						}
 						String headerValue = hField.getValue();
-						if (headerValue != null) { // TODO: Check that the variant indicates string encoding
+						if (headerValue != null) { 
+							// TODO: Check that the variant indicates string encoding
 							((UniversalCharstringValue) aField).setString(headerValue);
 							value.setField(responseFieldsNames[i], aField);
 						}
@@ -224,6 +225,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 			break;
 
 		default:
+			logError("No support of type " + field.getType().getName() + " in mapJSON(). Fix me!");
 			break;
 
 		}
@@ -235,10 +237,6 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 	@Override
 	public synchronized TriMessage encode(Value template) {
 		// Let's try to iterate over a given record
-		switch (template.getType().getTypeClass()) {
-		case TciTypeClass.RECORD:
-			break;
-		}
 		return super.encode(template);
 	}
 
@@ -330,13 +328,14 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 		case TciTypeClass.FLOAT:
 			builder.append(((FloatValue) fieldToEncode).getFloat());
 			break;
+		default:
+			logError("No support of type " + fieldToEncode.getType().getName() + " in TTCN2JSONEncode(). Fix!");
 		}
 
 		return builder.toString();
 	}
 
 	private String String2JSON(String string) {
-		// TODO Auto-generated method stub
 		return new String("\"" + string + "\"");
 	}
 
@@ -412,10 +411,8 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 			}
 			if (!hasTransferEncoding) {
 				dumpMessage.append("\n");
-			} else {
-			}
+			} 
 		}
-
 		return request;
 	}
 
