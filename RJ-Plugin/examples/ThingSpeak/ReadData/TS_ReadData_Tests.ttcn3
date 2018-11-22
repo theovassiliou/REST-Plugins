@@ -1,0 +1,68 @@
+module TS_ReadData_Tests {
+	import from Lib_JSON all;
+	import from ThingSpeak_Settings all;
+
+	import from API_ThingSpeak all;
+
+	template ReadData readData(ChannelConfig config,
+											  integer noOfReadings) := {
+		channelId := config.channel_id,
+		api_key := config.api_key,
+		results := noOfReadings
+	}
+
+	template ReadField readField(ChannelConfig config, string field,
+											  integer noOfReadings) := {
+		channelId := config.channel_id,
+		fieldId := field,
+		api_key := config.api_key,
+		results := noOfReadings
+	}
+
+
+	testcase test_ReadSingleData() runs on RESTComponent system TSRestService {
+		map(mtc:p, system:s) param (config);
+
+		p.send(readData(TheosGrube, 20));
+		timer t;
+		t.start(5.0);
+
+		alt {
+		[] p.receive(ReadDataResponse:{channelFeed := {?, ?}}) {
+				setverdict(pass);
+				t.stop;
+			}
+		[] p.receive {
+				setverdict(fail);
+			}
+		[] t.timeout {
+				setverdict(fail, "Server was not responding. Check base url");
+			}
+		}
+	}
+
+
+	testcase test_ReadSingleField() runs on RESTComponent system TSRestService {
+		map(mtc:p, system:s) param (config);
+
+		p.send(readField(TheosGrube, "1", 20));
+		timer t;
+		t.start(5.0);
+
+		alt {
+		[] p.receive(ReadDataResponse:{channelFeed := {?, ?}}) {
+				setverdict(pass);
+				t.stop;
+			}
+		[] p.receive {
+				setverdict(fail);
+			}
+		[] t.timeout {
+				setverdict(fail, "Server was not responding. Check base url");
+			}
+		}
+	}
+}
+with {
+	encode "RESTfull/json"
+}
