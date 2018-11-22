@@ -5,6 +5,7 @@ import java.lang.reflect.Array;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Iterator;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.client.HttpClient;
@@ -71,7 +72,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 						}
 					} else if (aField.getValueEncoding().startsWith(_HEADER_FIELD_ENCODING_PREFIX_)) {
 						String headerSpec = aField.getValueEncoding();
-						headerSpec = headerSpec.split("/")[1].trim();
+						headerSpec = headerSpec.split(":")[1].trim();
 						HttpField hField = headers.getField(headerSpec);
 						if (hField == null) {
 							value.setFieldOmitted(responseFieldsNames[i]);
@@ -200,7 +201,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 							mapJSON(rv.getField(allFields[i]).getType().newInstance(), jo.get(allFieldsMapped[i])));
 				} else {
 					// We found a mapping mismatch. No JSON object for this field allFields[i]
-					return null;
+					continue;
 				}
 
 			}
@@ -216,9 +217,12 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 			((UniversalCharstringValue) field).setString(obj.toString());
 			break;
 		case TciTypeClass.FLOAT:
-			Double jd = (Double) obj;
-			((FloatValue) field).setFloat(Float.parseFloat(jd.toString()));
+			((FloatValue) field).setFloat(Float.parseFloat(obj.toString()));
 			break;
+		case TciTypeClass.INTEGER:
+			((IntegerValue) field).setInt(Integer.parseInt(obj.toString()));
+			break;
+
 		default:
 			break;
 
@@ -238,8 +242,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 		return super.encode(template);
 	}
 
-	
-	public String createJSONBody(RecordValue restMessage ) {
+	public String createJSONBody(RecordValue restMessage) {
 		Value fieldToEncode = null;
 		String[] fieldNames = restMessage.getFieldNames();
 		for (int i = 0; i < fieldNames.length; i++) {
@@ -256,11 +259,9 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 			theJSON = TTCN2JSONencode(fieldToEncode);
 		}
 
-
-		return theJSON; 
+		return theJSON;
 	}
-	
-	
+
 	public void encodeResponseMessage(ContentResponse response, StringBuilder builder) {
 		builder.append(response.getVersion() + " ").append(response.getStatus()).append(" ")
 				.append(response.getReason()).append("\n");
@@ -299,7 +300,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 		builder.append("\n").append(response.getContentAsString()).append("\n");
 		builder.append("\n");
 	}
-	
+
 	private String TTCN2JSONencode(Value fieldToEncode) {
 		StringBuilder builder = new StringBuilder();
 
@@ -339,32 +340,31 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 		return new String("\"" + string + "\"");
 	}
 
-	
 	public Request createHeaderFields(Request request, RecordValue restMessage, StringBuilder dumpMessage) {
 		String[] allFields = restMessage.getFieldNames();
 		for (int i = 0; i < allFields.length; i++) {
 			String aFieldName = allFields[i];
 			Value rField = restMessage.getField(aFieldName);
-			if(rField.getValueEncoding().startsWith(_HEADER_FIELD_ENCODING_PREFIX_) && !(rField.notPresent())) {
-				
-				String headerSpec = rField.getValueEncoding();
-				headerSpec = headerSpec.split("/")[1].trim();
-				if(rField.getType().getTypeClass() == TciTypeClass.UNIVERSAL_CHARSTRING) {
+			if (rField.getValueEncoding().startsWith(_HEADER_FIELD_ENCODING_PREFIX_) && !(rField.notPresent())) {
+
+				String headerSpec = null;
+				if (rField.getType().getTypeClass() == TciTypeClass.UNIVERSAL_CHARSTRING) {
 					String headerValue = ((UniversalCharstringValue) rField).getString();
+					headerSpec = getHeaderName(rField, aFieldName);
 					request.header(headerSpec, headerValue);
-					dumpMessage.append(headerSpec+": " + headerValue + "\n");
-				} 
+					dumpMessage.append(headerSpec + ": " + headerValue + "\n");
+				}
 			}
 		}
 		return request;
 	}
 
-	
-	
-	public Request createRequest(HttpClient client, String method, String authorization, String path, StringBuilder dumpMessage) throws Exception {
+
+	public Request createRequest(HttpClient client, String method, String authorization, String path,
+			StringBuilder dumpMessage) throws Exception {
 		client.start();
-		Request request = null; 
-		switch(method) {
+		Request request = null;
+		switch (method) {
 		case "GET":
 			request = client.newRequest(path);
 			break;
@@ -376,17 +376,16 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 			method = "GET";
 			request = client.newRequest(path);
 		}
-			
-		
+
 		request = request.header("Accept", "application/json");
 
 		if (!authorization.equals(_DEFAULT_AUTHORIZATION_)) {
 			request = request.header("Authorization", authorization);
 		}
 		request = request.agent(_USER_AGENT_NAME_);
-		
-		dumpMessage.append(request.getVersion() + " " + request.getMethod()+" "+ request.getURI()+ request.getPath()+" " +"\n");
-		
+
+		dumpMessage.append(request.getVersion() + " " + request.getMethod() + " " + request.getURI() + " " + "\n");
+
 		HttpFields fields = request.getHeaders();
 
 		boolean hasTransferEncoding = false;
@@ -416,19 +415,22 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 			} else {
 			}
 		}
-		
+
 		return request;
 	}
-	
-	
+
 	/**
-	 * Encodes path elements of a REST message 
-	 * @param restMessage 		the REST message
-	 * @param baseUrl	 		a non-null default baseURL to be used 	
-	 * @return the path to be used for the REST message, or null if some error occurred 
+	 * Encodes path elements of a REST message
+	 * 
+	 * @param restMessage
+	 *            the REST message
+	 * @param baseUrl
+	 *            a non-null default baseURL to be used
+	 * @return the path to be used for the REST message, or null if some error
+	 *         occurred
 	 */
 	public String encodePath(RecordValue restMessage, String baseURL) {
-		
+
 		// path has form: path: /location/{locationName} or
 		// /arrivalBoard/{id}?date={date}
 		// with
@@ -438,12 +440,77 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 		String path = restMessage.getType().getTypeEncodingVariant();
 		if (!path.startsWith(_REQUEST_PATH_VARIANT_PREFIX_)) {
 			logError("We only support path encoding variants for REST messages");
-			return null ;
+			return null;
 		}
 
 		// so we only have paths so far
 		path = path.split(":")[1].trim();
 
+		String instantiatedPath = replacePathParams(restMessage, path);
+		if (instantiatedPath == null)
+			return baseURL;
+
+		// a second alternative to pass parameters is to pass them as fields with encode
+		// variants
+		// first we have to check, whether there are already parameters encoded
+		// Check for '?'
+		boolean hasParams = instantiatedPath.contains("?");
+
+		// iterate over all fields and check whether encode starts with "param"
+		String[] allFields = restMessage.getFieldNames();
+		StringBuilder paramListBuild = new StringBuilder();
+		boolean creatingParamList = !hasParams;
+
+		for (String fieldName : allFields) {
+			Value field = restMessage.getField(fieldName);
+			creatingParamList = !hasParams ;
+			if (!field.notPresent() && field.getValueEncoding().startsWith(_PATH_PARAM_FIELD_ENCODING_PREFIX_)) {
+				String paramName = getParamName(field, fieldName);
+				if (creatingParamList) {
+					paramListBuild.append("?");
+					hasParams = true;
+				} else {
+					paramListBuild.append("&");
+					hasParams = true;
+				}
+
+				paramListBuild.append(paramName);
+				String uriEncodedFieldValue = null;
+				switch (field.getType().getTypeClass()) {
+				case TciTypeClass.UNIVERSAL_CHARSTRING:
+					uriEncodedFieldValue = ((UniversalCharstringValue) field).getString().replace("+", "%2");
+					break;
+				case TciTypeClass.INTEGER:
+					uriEncodedFieldValue = Integer.toString(((IntegerValue) field).getInt());
+					break;
+				case TciTypeClass.CHARSTRING:
+					uriEncodedFieldValue = ((CharstringValue) field).getString().replace("+", "%2");
+					break;
+				default:
+					logError("Unsupported field type " + field.getType().getName());
+					continue;
+				}
+				paramListBuild.append("=").append(uriEncodedFieldValue);
+			}
+		}
+		return baseURL + instantiatedPath + paramListBuild.toString();
+
+	}
+
+	private String getParamName(Value val, String fieldName) {
+		String paramName = val.getValueEncoding().split(":")[1].trim();
+		if(paramName.equals(".")) { return fieldName; }
+		else { return paramName; }
+	}
+
+	private String getHeaderName(Value val, String fieldName) {
+		String paramName = val.getValueEncoding().split(":")[1].trim();
+		if(paramName.equals(".")) { return fieldName; }
+		else { return paramName; }
+	}
+
+	
+	private String replacePathParams(RecordValue restMessage, String path) {
 		String[] pathParams = StringUtils.substringsBetween(path, "{", "}");
 		String instantiatedPath = new String(path.toString());
 		if (pathParams != null) {
@@ -451,13 +518,12 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 				try {
 					assert ((StringUtils.countMatches(restMessage.getField(param).toString(), "\"")
 							% 2) == 0) : "Uneven occurence of \". FIX handling.";
-					if(!((restMessage.getField(param).getType().getTypeClass() == TciTypeClass.CHARSTRING) || restMessage
-							.getField(param).getType()
-							.getTypeClass() == TciTypeClass.UNIVERSAL_CHARSTRING)) {
-								logError("Only supporting Universal Charstring or Charstring Fields so far.");
-								return null;
-							}
-					
+					if (!((restMessage.getField(param).getType().getTypeClass() == TciTypeClass.CHARSTRING)
+							|| restMessage.getField(param).getType()
+									.getTypeClass() == TciTypeClass.UNIVERSAL_CHARSTRING)) {
+						logError("Only supporting Universal Charstring or Charstring Fields so far.");
+						return null;
+					}
 
 					String uriEncodedFieldValue = ((UniversalCharstringValue) restMessage.getField(param)).getString()
 							.replace("+", "%2");
@@ -469,9 +535,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 				}
 			}
 		}
-		
-		return  baseURL + instantiatedPath;
-		
+		return instantiatedPath;
 	}
 
 }
