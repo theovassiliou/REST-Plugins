@@ -19,7 +19,7 @@
     <plugin id="de.vassiliougioles.ttcn.ttwb.codec.RJPlugin">
       <parameter id="class" value="de.vassiliougioles.ttcn.ttwb.port.RESTPortPlugin"/>
     </plugin>
-    <parameter id="xtri" value="true"/>
+    <parameter id="xtri" value="false"/>
     <parameter id="default" value="true"/>
     <parameter id="portType" value="RESTfull"/>
   </port>

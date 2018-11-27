@@ -1,9 +1,5 @@
 package de.vassiliougioles.ttcn.ttwb.port;
 
-import org.etsi.ttcn.tci.TciParameterList;
-import org.etsi.ttcn.tci.TciValueList;
-import org.etsi.ttcn.tci.Type;
-import org.etsi.ttcn.tci.Value;
 import org.etsi.ttcn.tri.TriAddress;
 import org.etsi.ttcn.tri.TriAddressList;
 import org.etsi.ttcn.tri.TriComponentId;
@@ -11,15 +7,13 @@ import org.etsi.ttcn.tri.TriMessage;
 import org.etsi.ttcn.tri.TriParameterList;
 import org.etsi.ttcn.tri.TriPortId;
 import org.etsi.ttcn.tri.TriPortIdList;
-import org.etsi.ttcn.tri.TriSignatureId;
 import org.etsi.ttcn.tri.TriStatus;
 import org.etsi.ttcn.tri.TriTestCaseId;
 
 import com.testingtech.ttcn.tri.AbstractMsgBasedSA;
-import com.testingtech.ttcn.tri.IXSAPlugin;
-import com.testingtech.ttcn.tri.extension.XPortPluginProvider;
+import com.testingtech.ttcn.tri.extension.PortPluginProvider;
 
-public abstract class AbstractRESTPortPlugin extends AbstractMsgBasedSA implements XPortPluginProvider, IXSAPlugin {
+public abstract class AbstractRESTPortPlugin extends AbstractMsgBasedSA implements PortPluginProvider {
 	private static final long serialVersionUID = -6523964658234648218L;
 
 	@Override
@@ -59,83 +53,6 @@ public abstract class AbstractRESTPortPlugin extends AbstractMsgBasedSA implemen
 
 	@Override
 	public TriStatus triSendBC(TriComponentId componentId, TriPortId tsiPortId, TriMessage sendMessage) {
-		return null;
-	}
-
-
-	@Override
-	public TriStatus xtriUnmapParam(TriPortId compPortId, TriPortId tsiPortId, TciParameterList paramList) {
-		return null;
-	}
-
-
-	@Override
-	public TriStatus xtriSendBC(TriComponentId componentId, TriPortId tsiPortId, Value sendMessage) {
-		return null;
-	}
-
-	@Override
-	public TriStatus xtriSendMC(TriComponentId componentId, TriPortId tsiPortId, TciValueList sutAddresses,
-			Value sendMessage) {
-		return null;
-	}
-
-	@Override
-	public TriStatus xtriCall(TriComponentId componentId, TriPortId tsiPortId, Value sutAddress,
-			TriSignatureId signatureId, TciParameterList parameterList) {
-		return null;
-	}
-
-	@Override
-	public TriStatus xtriCallBC(TriComponentId componentId, TriPortId tsiPortId, TriSignatureId signatureId,
-			TciParameterList parameterList) {
-		return null;
-	}
-
-	@Override
-	public TriStatus xtriCallMC(TriComponentId componentId, TriPortId tsiPortId, TciValueList sutAddresses,
-			TriSignatureId signatureId, TciParameterList parameterList) {
-		return null;
-	}
-
-	@Override
-	public TriStatus xtriReply(TriComponentId componentId, TriPortId tsiPortId, Value sutAddress,
-			TriSignatureId signatureId, TciParameterList parameterList, Value returnValue) {
-		return null;
-	}
-
-	@Override
-	public TriStatus xtriReplyBC(TriComponentId componentId, TriPortId tsiPortId, TriSignatureId signatureId,
-			TciParameterList parameterList, Value returnValue) {
-		return null;
-	}
-
-	@Override
-	public TriStatus xtriReplyMC(TriComponentId componentId, TriPortId tsiPortId, TciValueList sutAddresses,
-			TriSignatureId signatureId, TciParameterList parameterList, Value returnValue) {
-		return null;
-	}
-
-	@Override
-	public TriStatus xtriRaise(TriComponentId componentId, TriPortId tsiPortId, Value sutAddress,
-			TriSignatureId signatureId, Value exc) {
-		return null;
-	}
-
-	@Override
-	public TriStatus xtriRaiseBC(TriComponentId componentId, TriPortId tsiPortId, TriSignatureId signatureId,
-			Value exc) {
-		return null;
-	}
-
-	@Override
-	public TriStatus xtriRaiseMC(TriComponentId componentId, TriPortId tsiPortId, TciValueList sutAddresses,
-			TriSignatureId signatureId, Value exc) {
-		return null;
-	}
-
-	@Override
-	public Value xtriConvert(TriPortId tsiPortId, Object value, Type typeHypothesis) {
 		return null;
 	}
 

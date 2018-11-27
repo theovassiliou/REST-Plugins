@@ -10,71 +10,114 @@ import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.etsi.ttcn.tci.CharstringValue;
 import org.etsi.ttcn.tci.RecordValue;
-import org.etsi.ttcn.tci.TciParameter;
-import org.etsi.ttcn.tci.TciParameterList;
 import org.etsi.ttcn.tci.UniversalCharstringValue;
 import org.etsi.ttcn.tci.Value;
+import org.etsi.ttcn.tri.TriAddress;
 import org.etsi.ttcn.tri.TriComponentId;
 import org.etsi.ttcn.tri.TriMessage;
+import org.etsi.ttcn.tri.TriParameter;
+import org.etsi.ttcn.tri.TriParameterList;
 import org.etsi.ttcn.tri.TriPortId;
 import org.etsi.ttcn.tri.TriStatus;
 
-import com.testingtech.ttcn.tri.IXSAPlugin;
+import com.testingtech.ttcn.tri.ISAPlugin;
+import com.testingtech.ttcn.tri.TciValueContainer;
 import com.testingtech.ttcn.tri.TriAddressImpl;
 import com.testingtech.ttcn.tri.TriMessageImpl;
 import com.testingtech.ttcn.tri.TriStatusImpl;
-import com.testingtech.ttcn.tri.extension.XPortPluginProvider;
+import com.testingtech.ttcn.tri.extension.PortPluginProvider;
 
 import de.vassiliougioles.ttcn.ttwb.codec.RESTJSONCodec;
 
-public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMapping, XPortPluginProvider, IXSAPlugin {
+public class RESTPortPlugin extends AbstractRESTPortPlugin
+		implements TTCNRESTMapping, PortPluginProvider {
+
 	private static final long serialVersionUID = -6523964658234648218L;
 	private String baseURL = _DEFAULT_BASE_URL_;
-	private String authorization =  _DEFAULT_AUTHORIZATION_;
+
+	public String getBaseURL() {
+		return baseURL;
+	}
+
+	public void setBaseURL(String baseURL) {
+		this.baseURL = baseURL;
+		restCodec.setBaseUrl(baseURL);
+	}
+
+	public String getAuthorization() {
+		return authorization;
+	}
+
+	private String authorization = _DEFAULT_AUTHORIZATION_;
 	private RESTJSONCodec restCodec = null;
 
-
-	@Override
-	public IXSAPlugin getXPortPlugin() {
+	public ISAPlugin getPortPlugin() {
 		return new RESTPortPlugin();
 	}
 
+	private void setAuthorization(String authorization) {
+		this.authorization = authorization;
+		restCodec.setAuthorization(authorization);
+	}
+
 	@Override
-	public TriStatus xtriMapParam(TriPortId compPortId, TriPortId tsiPortId, TciParameterList paramList) {
-
+	public TriStatus triMapParam(TriPortId compPortId, TriPortId tsiPortId, TriParameterList paramList) {
 		restCodec = (RESTJSONCodec) getRB().codecServer.getCodec(_ENCODING_NAME_);
-		
+
+		setBaseURL(_DEFAULT_BASE_URL_);
+		setAuthorization(_DEFAULT_AUTHORIZATION_);
+
 		@SuppressWarnings("unchecked")
-		Enumeration<TciParameter> parameterList = paramList.getParameters();
+		Enumeration<TriParameter> parameterList = paramList.getParameters();
 		while (parameterList.hasMoreElements()) {
-			TciParameter param = (TciParameter) parameterList.nextElement();
-			if (param.getParameter().getType().getName().equals(_PORT_CONFIG_TYPE_NAME_)) {
-				RecordValue rv = (RecordValue) param.getParameter();
-				extractSendToInformation(rv);
-			}
+			TriParameter triParam = (TriParameter) parameterList.nextElement();
+			if (triParam instanceof TciValueContainer) {
+				Value param = (Value) ((TciValueContainer) triParam).getValue();
 
-			if (param.getParameterName().equals(_CONFIG_BASEURL_FIELD_NAME_)) {
-				baseURL = ((CharstringValue) param.getParameter()).getString();
-			}
-			if (param.getParameterName().equals(_CONFIG_AUTH_FIELD_NAME_)) {
-				authorization = ((CharstringValue) param.getParameter()).getString();
-			}
+				if (param.getType().getName().equals(_PORT_CONFIG_TYPE_NAME_)) {
+					RecordValue rv = (RecordValue) param;
+					extractSendToInformation(rv);
+				}
 
+				if (triParam.getParameterName().equals(_CONFIG_BASEURL_FIELD_NAME_)) {
+					setBaseURL(((CharstringValue) param).getString());
+				}
+				if (triParam.getParameterName().equals(_CONFIG_AUTH_FIELD_NAME_)) {
+					setAuthorization(((CharstringValue) param).getString());
+				}
+			}
 		}
+		return TriStatusImpl.OK;
+
+	}
+
+	public TriStatus triUnmapParam(TriPortId compPortId, TriPortId tsiPortId, TriParameterList paramList) {
+		setBaseURL(_DEFAULT_BASE_URL_);
+		setAuthorization(_DEFAULT_AUTHORIZATION_);
 		return TriStatusImpl.OK;
 	}
 
 	@Override
-	public TriStatus xtriUnmapParam(TriPortId compPortId, TriPortId tsiPortId, TciParameterList paramList) {
-		 baseURL = _DEFAULT_BASE_URL_;
-		 authorization =  _DEFAULT_AUTHORIZATION_;
-		return null;
-	}
+	public TriStatus triSend(TriComponentId componentId, TriPortId tsiPortId, TriAddress triAddress,
+			TriMessage triSendMessage) {
+		Value sutAddress = null;
+		Value sendMessage = null;
 
-	@Override
-	public TriStatus xtriSend(TriComponentId componentId, TriPortId tsiPortId, Value sutAddress, Value sendMessage) {
-		assert tsiPortId.getPortTypeName().split("\\.")[1]
-				.equals(_PORT_TYPE_NAME_) : "We only handle operations on " + _PORT_TYPE_NAME_ + " ports";
+		if (triAddress != null && !(triAddress instanceof TciValueContainer)) {
+			return new TriStatusImpl("Can't send message as we cannot retrieve information from sendMessage");
+		}
+		if (!(triSendMessage instanceof TciValueContainer)) {
+			return new TriStatusImpl("Can't send message as we cannot retrieve information from sendMessage");
+		}
+		if (triAddress != null) {
+			sutAddress = ((TciValueContainer) triAddress).getValue();
+		}
+		if (triSendMessage != null) {
+			sendMessage = ((TciValueContainer) triSendMessage).getValue();
+		}
+
+		assert tsiPortId.getPortTypeName().split("\\.")[1].equals(_PORT_TYPE_NAME_) : "We only handle operations on "
+				+ _PORT_TYPE_NAME_ + " ports";
 
 		StringBuilder dumpMessage = new StringBuilder();
 		extractSendToInformation(sutAddress);
@@ -83,7 +126,7 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 		if (sendMessage.getType().getTypeEncoding().equals(_GET_ENCODING_NAME_)) {
 			RecordValue restGET = (RecordValue) sendMessage;
 
-			final String strURL =  restCodec.encodePath(restGET, baseURL);
+			final String strURL = restCodec.encodePath(restGET, getBaseURL());
 			// now we can call the url
 
 			// Instantiate HttpClient
@@ -95,13 +138,9 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 			// Start HttpClient
 			try {
 				httpClient.start();
-				Request request = restCodec.createRequest(httpClient,  "GET", authorization,strURL, dumpMessage);
-				restCodec.createHeaderFields(request,restGET, dumpMessage);
-				System.out.println("---------");
-				System.out.println("Message send:");
-				System.out.println(dumpMessage);
-				System.out.println("---------");
-				
+				Request request = restCodec.createRequest(httpClient, "GET", getAuthorization(), strURL, dumpMessage);
+				restCodec.createHeaderFields(request, restGET, dumpMessage);
+
 				ContentResponse response = request.send();
 
 				StringBuilder builder = new StringBuilder();
@@ -120,20 +159,17 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 
 			RecordValue restPOST = (RecordValue) sendMessage;
 
-			final String strURL =  restCodec.encodePath(restPOST, baseURL);
+			final String strURL = restCodec.encodePath(restPOST, getBaseURL());
 			HttpClient httpClient = new HttpClient(new SslContextFactory());
 			httpClient.setFollowRedirects(false);
 			try {
 				httpClient.start();
-				Request request = restCodec.createRequest(httpClient,  "POST", authorization,strURL, dumpMessage);
-				restCodec.createHeaderFields(request,restPOST, dumpMessage);
-				request.content(new StringContentProvider(restCodec.createJSONBody(restPOST), "UTF-8"), _CONTENT_ENCODING_);
+				Request request = restCodec.createRequest(httpClient, "POST", getAuthorization(), strURL, dumpMessage);
+				restCodec.createHeaderFields(request, restPOST, dumpMessage);
+				request.content(new StringContentProvider(restCodec.createJSONBody(restPOST), "UTF-8"),
+						_CONTENT_ENCODING_);
 				dumpMessage.append("\n" + restCodec.createJSONBody(restPOST));
-				System.out.println("---------");
-				System.out.println("Message send:");
-				System.out.println(dumpMessage);
-				System.out.println("---------");
-				
+
 				ContentResponse response = request.send();
 
 				StringBuilder builder = new StringBuilder();
@@ -147,7 +183,7 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 				logError("Failed to send request or to receive response.", e1);
 				new TriStatusImpl("An Error occured.");
 			}
-			
+
 			try {
 				httpClient.stop();
 			} catch (Exception e) {
@@ -159,10 +195,7 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 		} else {
 			return TriStatusImpl.OK;
 		}
-
 	}
-
-
 
 	private void extractSendToInformation(Value sutAddress) {
 		if ((!(sutAddress == null)) && sutAddress.getType().getName().equals(_PORT_CONFIG_TYPE_NAME_)) {
@@ -172,10 +205,10 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 				String string = fieldNames[i];
 				if (string.equals(_CONFIG_BASEURL_FIELD_NAME_)) {
 					UniversalCharstringValue cv = (UniversalCharstringValue) rv.getField(string);
-					baseURL = cv.getString();
-				} else if (string.equals(_CONFIG_AUTH_FIELD_NAME_) &&  !rv.getField(string).notPresent()) {
+					setBaseURL(cv.getString());
+				} else if (string.equals(_CONFIG_AUTH_FIELD_NAME_) && !rv.getField(string).notPresent()) {
 					UniversalCharstringValue cv = (UniversalCharstringValue) rv.getField(string);
-					authorization = cv.getString();
+					setAuthorization(cv.getString());
 				}
 			}
 		}

@@ -17,6 +17,7 @@
     <parameter id="name" value="RESTPort"/>
     <parameter id="description" value="REST PortPlugin"/>
     <parameter id="class" value="de.vassiliougioles.ttcn.ttwb.port.RESTPortPlugin"/>
-    <parameter id="xtri" value="true"/>
+    <parameter id="xtri" value="false"/>
+    <parameter id="rt" value="false"/>
   </extension>
 </plugin>
