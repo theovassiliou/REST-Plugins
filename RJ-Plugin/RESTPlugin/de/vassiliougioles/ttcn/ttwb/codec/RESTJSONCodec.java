@@ -5,15 +5,16 @@ import java.lang.reflect.Array;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Iterator;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpField;
 import org.eclipse.jetty.http.HttpFields;
 import org.eclipse.jetty.http.HttpParser;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.etsi.ttcn.tci.CharstringValue;
 import org.etsi.ttcn.tci.FloatValue;
 import org.etsi.ttcn.tci.IntegerValue;
@@ -31,13 +32,28 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import com.testingtech.ttcn.tci.codec.base.AbstractBaseCodec;
+import com.testingtech.ttcn.tri.TriMessageImpl;
 
 import de.vassiliougioles.ttcn.ttwb.port.TTCNRESTMapping;
 
+/**
+ * @author Theo Vassiliou
+ *
+ */
 public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping, TciCDProvided {
 
 	static private JSONParser parser = new JSONParser();
-
+	private String baseURL = null;
+	private String authorization = null;
+	
+	public void setBaseUrl(String baseUrl) {
+		this.baseURL = baseUrl;
+	}
+	
+	public void setAuthorization(String authorization) {
+		this.authorization = authorization;
+	}
+	
 	@Override
 	public synchronized Value decode(TriMessage rcvdMessage, Type decodingHypothesis) {
 		ResponseMessage rm = new ResponseMessage();
@@ -79,7 +95,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 							continue; // Header not included
 						}
 						String headerValue = hField.getValue();
-						if (headerValue != null) { 
+						if (headerValue != null) {
 							// TODO: Check that the variant indicates string encoding
 							((UniversalCharstringValue) aField).setString(headerValue);
 							value.setField(responseFieldsNames[i], aField);
@@ -235,9 +251,55 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 	}
 
 	@Override
-	public synchronized TriMessage encode(Value template) {
-		// Let's try to iterate over a given record
-		return super.encode(template);
+	public synchronized TriMessage encode(Value sendMessage) {
+		StringBuilder dumpMessage = new StringBuilder();
+
+		// check whether encode is REST/get
+		if (sendMessage.getType().getTypeEncoding().equals(_GET_ENCODING_NAME_)) {
+			RecordValue restGET = (RecordValue) sendMessage;
+
+			final String strURL = encodePath(restGET, baseURL);
+			// now we can call the url
+
+			// Instantiate HttpClient
+			HttpClient httpClient = new HttpClient(new SslContextFactory());
+
+			// Configure HttpClient, for example:
+			httpClient.setFollowRedirects(false);
+
+			// Start HttpClient
+			try {
+				Request request = createRequest(httpClient, "GET", authorization, strURL, dumpMessage);
+				createHeaderFields(request, restGET, dumpMessage);
+			} catch (Exception e1) {
+				e1.printStackTrace();
+				tciErrorReq(e1.getMessage());
+				return null;
+			}
+			return TriMessageImpl.valueOf(dumpMessage.toString().getBytes(StandardCharsets.UTF_8));
+
+		} else if (sendMessage.getType().getTypeEncoding().equals(_POST_ENCODING_NAME_)) {
+
+			RecordValue restPOST = (RecordValue) sendMessage;
+
+			final String strURL = encodePath(restPOST, baseURL);
+			HttpClient httpClient = new HttpClient(new SslContextFactory());
+			httpClient.setFollowRedirects(false);
+			try {
+				httpClient.start();
+				Request request = createRequest(httpClient, "POST", authorization, strURL, dumpMessage);
+				createHeaderFields(request, restPOST, dumpMessage);
+				request.content(new StringContentProvider(createJSONBody(restPOST), "UTF-8"), _CONTENT_ENCODING_);
+				dumpMessage.append("\n" + createJSONBody(restPOST));
+
+			} catch (Exception e1) {
+				tciErrorReq(e1.getMessage());
+				return null;
+			}
+
+			return TriMessageImpl.valueOf(dumpMessage.toString().getBytes(StandardCharsets.UTF_8));
+		}
+		return super.encode(sendMessage);
 	}
 
 	public String createJSONBody(RecordValue restMessage) {
@@ -349,7 +411,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 				String headerSpec = null;
 				if (rField.getType().getTypeClass() == TciTypeClass.UNIVERSAL_CHARSTRING) {
 					String headerValue = ((UniversalCharstringValue) rField).getString();
-					headerSpec = getHeaderName(rField, aFieldName);
+					headerSpec = getMappedFieldName(rField, aFieldName);
 					request.header(headerSpec, headerValue);
 					dumpMessage.append(headerSpec + ": " + headerValue + "\n");
 				}
@@ -357,7 +419,6 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 		}
 		return request;
 	}
-
 
 	public Request createRequest(HttpClient client, String method, String authorization, String path,
 			StringBuilder dumpMessage) throws Exception {
@@ -411,7 +472,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 			}
 			if (!hasTransferEncoding) {
 				dumpMessage.append("\n");
-			} 
+			}
 		}
 		return request;
 	}
@@ -460,9 +521,9 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 
 		for (String fieldName : allFields) {
 			Value field = restMessage.getField(fieldName);
-			creatingParamList = !hasParams ;
+			creatingParamList = !hasParams;
 			if (!field.notPresent() && field.getValueEncoding().startsWith(_PATH_PARAM_FIELD_ENCODING_PREFIX_)) {
-				String paramName = getParamName(field, fieldName);
+				String paramName = getMappedFieldName(field, fieldName);
 				if (creatingParamList) {
 					paramListBuild.append("?");
 					hasParams = true;
@@ -494,19 +555,30 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 
 	}
 
-	private String getParamName(Value val, String fieldName) {
+	/**
+	 * Returns the mapped fieldName. The mapping is retrieved from the valueEncoding
+	 * with encode (fieldName) "param|header: newFieldName | "."
+	 * 
+	 * if there is no value encoding or "." is used a mapped fieldName then the
+	 * value of the parameter fieldName is being returned
+	 * 
+	 * @param val
+	 *            the TciValue to be mapped, typically a field of a record value
+	 * @param fieldName
+	 *            the name of the field
+	 * @return fieldName if valueEncoding contains "." or is null.
+	 */
+	private String getMappedFieldName(Value val, String fieldName) {
+		if (val.getValueEncoding() == null)
+			return fieldName;
 		String paramName = val.getValueEncoding().split(":")[1].trim();
-		if(paramName.equals(".")) { return fieldName; }
-		else { return paramName; }
+		if (paramName == null || paramName.equals(".")) {
+			return fieldName;
+		} else {
+			return paramName;
+		}
 	}
 
-	private String getHeaderName(Value val, String fieldName) {
-		String paramName = val.getValueEncoding().split(":")[1].trim();
-		if(paramName.equals(".")) { return fieldName; }
-		else { return paramName; }
-	}
-
-	
 	private String replacePathParams(RecordValue restMessage, String path) {
 		String[] pathParams = StringUtils.substringsBetween(path, "{", "}");
 		String instantiatedPath = new String(path.toString());

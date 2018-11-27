@@ -5,11 +5,21 @@
       <parameter id="class" value="de.vassiliougioles.ttcn.ttwb.codec.RESTJSONCodecProvider"/>
     </plugin>
   </codec>
+  <codec encode="REST/get">
+    <plugin id="de.vassiliougioles.ttcn.ttwb.codec.RJPlugin">
+      <parameter id="class" value="de.vassiliougioles.ttcn.ttwb.codec.RESTJSONCodecProvider"/>
+    </plugin>
+  </codec>
+  <codec encode="HTTP/response">
+    <plugin id="de.vassiliougioles.ttcn.ttwb.codec.RJPlugin">
+      <parameter id="class" value="de.vassiliougioles.ttcn.ttwb.codec.RESTJSONCodecProvider"/>
+    </plugin>
+  </codec>
   <port>
     <plugin id="de.vassiliougioles.ttcn.ttwb.codec.RJPlugin">
       <parameter id="class" value="de.vassiliougioles.ttcn.ttwb.port.RESTPortPlugin"/>
     </plugin>
-    <parameter id="xtri" value="true"/>
+    <parameter id="xtri" value="false"/>
     <parameter id="default" value="true"/>
     <parameter id="portType" value="RESTfull"/>
   </port>
