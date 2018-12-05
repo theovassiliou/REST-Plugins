@@ -2,6 +2,8 @@ package de.vassiliougioles.ttcn.ttwb.port;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.HttpResponseException;
@@ -143,8 +145,8 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin
 				Request request = restCodec.createRequest(httpClient, "GET", getAuthorization(), strURL, dumpMessage);
 				restCodec.createHeaderFields(request, restGET, dumpMessage);
 
-				ContentResponse response = request.send();
-
+				Response response = sendRequest(request);
+				
 				StringBuilder builder = new StringBuilder();
 				restCodec.encodeResponseMessage(response, builder);
 				TriMessage rcvMessage = TriMessageImpl.valueOf(builder.toString().getBytes(StandardCharsets.UTF_8));
@@ -172,14 +174,7 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin
 						_CONTENT_ENCODING_);
 				dumpMessage.append("\n" + restCodec.createJSONBody(restPOST));
 
-				Response response;
-				try {
-					response = request.send();
-				} catch (HttpResponseException hrex) {
-					// e.g. if a 
-					logWarn(hrex.getMessage() + ". Continuing.");
-					response =  hrex.getResponse();
-				}
+				Response response = sendRequest(request);
 				StringBuilder builder = new StringBuilder();
 				restCodec.encodeResponseMessage(response, builder);
 				TriMessage rcvMessage = TriMessageImpl.valueOf(builder.toString().getBytes(StandardCharsets.UTF_8));
@@ -203,6 +198,18 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin
 		} else {
 			return TriStatusImpl.OK;
 		}
+	}
+
+	private Response sendRequest(Request request) throws InterruptedException, TimeoutException, ExecutionException {
+		Response response;
+		try {
+			response = request.send();
+		} catch (HttpResponseException hrex) {
+			// e.g. if a 
+			logWarn(hrex.getMessage() + ". Continuing.");
+			response =  hrex.getResponse();
+		}
+		return response;
 	}
 
 	private void extractSendToInformation(Value sutAddress) {
