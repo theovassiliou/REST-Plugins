@@ -4,8 +4,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 
 import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.HttpResponseException;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.etsi.ttcn.tci.CharstringValue;
@@ -170,8 +172,14 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin
 						_CONTENT_ENCODING_);
 				dumpMessage.append("\n" + restCodec.createJSONBody(restPOST));
 
-				ContentResponse response = request.send();
-
+				Response response;
+				try {
+					response = request.send();
+				} catch (HttpResponseException hrex) {
+					// e.g. if a 
+					logWarn(hrex.getMessage() + ". Continuing.");
+					response =  hrex.getResponse();
+				}
 				StringBuilder builder = new StringBuilder();
 				restCodec.encodeResponseMessage(response, builder);
 				TriMessage rcvMessage = TriMessageImpl.valueOf(builder.toString().getBytes(StandardCharsets.UTF_8));

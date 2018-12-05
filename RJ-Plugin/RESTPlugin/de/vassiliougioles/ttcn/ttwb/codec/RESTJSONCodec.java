@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpField;
 import org.eclipse.jetty.http.HttpFields;
@@ -45,15 +46,15 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 	static private JSONParser parser = new JSONParser();
 	private String baseURL = null;
 	private String authorization = null;
-	
+
 	public void setBaseUrl(String baseUrl) {
 		this.baseURL = baseUrl;
 	}
-	
+
 	public void setAuthorization(String authorization) {
 		this.authorization = authorization;
 	}
-	
+
 	@Override
 	public synchronized Value decode(TriMessage rcvdMessage, Type decodingHypothesis) {
 		ResponseMessage rm = new ResponseMessage();
@@ -85,6 +86,8 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 							if (mappedObject == null)
 								continue;
 							value.setField(responseFieldsNames[i], mappedObject);
+						} else {
+							value.setFieldOmitted(responseFieldsNames[i]);
 						}
 					} else if (aField.getValueEncoding().startsWith(_HEADER_FIELD_ENCODING_PREFIX_)) {
 						String headerSpec = aField.getValueEncoding();
@@ -321,7 +324,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 		return theJSON;
 	}
 
-	public void encodeResponseMessage(ContentResponse response, StringBuilder builder) {
+	public void encodeResponseMessage(Response response, StringBuilder builder) {
 		builder.append(response.getVersion() + " ").append(response.getStatus()).append(" ")
 				.append(response.getReason()).append("\n");
 
@@ -352,12 +355,16 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 			if (!hasTransferEncoding) {
 				builder.append("\n");
 			} else {
-				builder.append("Content-Length: ").append(response.getContent().length).append("\n");
+				if (response instanceof ContentResponse) {
+					builder.append("Content-Length: ").append(((ContentResponse) response).getContent().length).append("\n");
+				}
 			}
 		}
-
-		builder.append("\n").append(response.getContentAsString()).append("\n");
-		builder.append("\n");
+		if (response instanceof ContentResponse) {
+			builder.append("\n").append(
+					((ContentResponse) response).getContentAsString()).append("\n");
+			builder.append("\n");
+		}
 	}
 
 	private String TTCN2JSONencode(Value fieldToEncode) {
