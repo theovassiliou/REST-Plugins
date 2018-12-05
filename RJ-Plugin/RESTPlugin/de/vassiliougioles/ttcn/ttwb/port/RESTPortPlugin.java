@@ -33,8 +33,7 @@ import com.testingtech.ttcn.tri.extension.PortPluginProvider;
 
 import de.vassiliougioles.ttcn.ttwb.codec.RESTJSONCodec;
 
-public class RESTPortPlugin extends AbstractRESTPortPlugin
-		implements TTCNRESTMapping, PortPluginProvider {
+public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMapping, PortPluginProvider {
 
 	private static final long serialVersionUID = -6523964658234648218L;
 	private String baseURL = _DEFAULT_BASE_URL_;
@@ -146,7 +145,7 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin
 				restCodec.createHeaderFields(request, restGET, dumpMessage);
 
 				Response response = sendRequest(request);
-				
+
 				StringBuilder builder = new StringBuilder();
 				restCodec.encodeResponseMessage(response, builder);
 				TriMessage rcvMessage = TriMessageImpl.valueOf(builder.toString().getBytes(StandardCharsets.UTF_8));
@@ -204,10 +203,14 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin
 		Response response;
 		try {
 			response = request.send();
-		} catch (HttpResponseException hrex) {
-			// e.g. if a 
-			logWarn(hrex.getMessage() + ". Continuing.");
-			response =  hrex.getResponse();
+		} catch (ExecutionException hrex) {
+			// e.g. if a
+			logWarn(hrex.getCause().getMessage() + ". Continuing.");
+			if (hrex.getCause() instanceof HttpResponseException) {
+				response = ((HttpResponseException) hrex.getCause()).getResponse(); // hrex.getResponse();
+			} else {
+				response = null;
+			}
 		}
 		return response;
 	}
