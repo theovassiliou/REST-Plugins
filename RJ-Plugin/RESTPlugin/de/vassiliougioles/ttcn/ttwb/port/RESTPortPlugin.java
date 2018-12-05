@@ -144,13 +144,14 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 				restCodec.createHeaderFields(request, restGET, dumpMessage);
 
 				Response response = sendRequest(request);
-
-				StringBuilder builder = new StringBuilder();
-				restCodec.encodeResponseMessage(response, builder);
-				TriMessage rcvMessage = TriMessageImpl.valueOf(builder.toString().getBytes(StandardCharsets.UTF_8));
-				// enqueue the URL as response address to be able to identify it in TTCN-3
-				TriAddressImpl rcvSutAddress = new TriAddressImpl(strURL.getBytes());
-				triEnqueueMsg(tsiPortId, rcvSutAddress, componentId, rcvMessage);
+				if (response != null) {
+					StringBuilder builder = new StringBuilder();
+					restCodec.encodeResponseMessage(response, builder);
+					TriMessage rcvMessage = TriMessageImpl.valueOf(builder.toString().getBytes(StandardCharsets.UTF_8));
+					// enqueue the URL as response address to be able to identify it in TTCN-3
+					TriAddressImpl rcvSutAddress = new TriAddressImpl(strURL.getBytes());
+					triEnqueueMsg(tsiPortId, rcvSutAddress, componentId, rcvMessage);
+				}
 
 			} catch (Exception e1) {
 				e1.printStackTrace();
@@ -173,12 +174,14 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 				dumpMessage.append("\n" + restCodec.createJSONBody(restPOST));
 
 				Response response = sendRequest(request);
-				StringBuilder builder = new StringBuilder();
-				restCodec.encodeResponseMessage(response, builder);
-				TriMessage rcvMessage = TriMessageImpl.valueOf(builder.toString().getBytes(StandardCharsets.UTF_8));
-				// enqueue the URL as response address to be able to identify it in TTCN-3
-				TriAddressImpl rcvSutAddress = new TriAddressImpl(strURL.getBytes());
-				triEnqueueMsg(tsiPortId, rcvSutAddress, componentId, rcvMessage);
+				if (response != null) {
+					StringBuilder builder = new StringBuilder();
+					restCodec.encodeResponseMessage(response, builder);
+					TriMessage rcvMessage = TriMessageImpl.valueOf(builder.toString().getBytes(StandardCharsets.UTF_8));
+					// enqueue the URL as response address to be able to identify it in TTCN-3
+					TriAddressImpl rcvSutAddress = new TriAddressImpl(strURL.getBytes());
+					triEnqueueMsg(tsiPortId, rcvSutAddress, componentId, rcvMessage);
+				}
 
 			} catch (Exception e1) {
 				logError("Failed to send request or to receive response.", e1);
