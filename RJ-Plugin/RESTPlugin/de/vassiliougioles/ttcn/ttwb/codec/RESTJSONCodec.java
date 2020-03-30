@@ -16,6 +16,7 @@ import org.eclipse.jetty.http.HttpField;
 import org.eclipse.jetty.http.HttpFields;
 import org.eclipse.jetty.http.HttpParser;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.etsi.ttcn.tci.BooleanValue;
 import org.etsi.ttcn.tci.CharstringValue;
 import org.etsi.ttcn.tci.FloatValue;
 import org.etsi.ttcn.tci.IntegerValue;
@@ -241,6 +242,9 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 			break;
 		case TciTypeClass.INTEGER:
 			((IntegerValue) field).setInt(Integer.parseInt(obj.toString()));
+			break;
+		case TciTypeClass.BOOLEAN:
+			((BooleanValue) field).setBoolean(Boolean.parseBoolean(obj.toString()));
 			break;
 
 		default:
