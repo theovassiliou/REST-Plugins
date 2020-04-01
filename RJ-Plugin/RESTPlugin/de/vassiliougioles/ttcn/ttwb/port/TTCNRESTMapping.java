@@ -3,7 +3,7 @@ package de.vassiliougioles.ttcn.ttwb.port;
 public interface TTCNRESTMapping {
 	final String _DEFAULT_BASE_URL_ = "NO PROTOCOL SET:";
 	final String _DEFAULT_AUTHORIZATION_ = "NO AUTHORIZATION SET";
-	final String _USER_AGENT_NAME_ = "TTworkbench/26 RESTPortPlugin/0.1";
+	final String _USER_AGENT_NAME_ = "TTworkbench/29 RESTPortPlugin/0.1";
 	final String _ENCODING_NAME_ = "RESTfull/json";
 	final String _PORT_TYPE_NAME_ = "RESTfull";
 	final String _PORT_CONFIG_TYPE_NAME_ = "RESTAPIconfig";
