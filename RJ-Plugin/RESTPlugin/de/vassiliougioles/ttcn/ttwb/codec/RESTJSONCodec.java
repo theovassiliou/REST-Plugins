@@ -2,6 +2,7 @@ package de.vassiliougioles.ttcn.ttwb.codec;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
+import java.math.BigInteger;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -61,19 +62,20 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 		ResponseMessage rm = new ResponseMessage();
 		HttpParser hParser = new HttpParser(rm);
 		ByteBuffer bb = ByteBuffer.wrap(rcvdMessage.getEncodedMessage());
-		// FIXME: This hack is required due to a bug introduced in with TTwb 27 or later.
-		// decodingHypothesis.getEncoding() returns errornously the module encoding, and not the one 
+		// FIXME: This hack is required due to a bug introduced in with TTwb 27 or
+		// later.
+		// decodingHypothesis.getEncoding() returns errornously the module encoding, and
+		// not the one
 		// attached to the type.
 		String typeEncoding = decodingHypothesis.newInstance().getValueEncoding();
 
-		while (!hParser.isComplete()) {
+		while (!hParser.isComplete() && bb.remaining() > 0) {
 			hParser.parseNext(bb);
 		}
 
 		HttpFields headers = rm.getHeaderFields();
 
-		if (typeEncoding.equals(_GET_RESPONSE_ENCODING_NAME_)
-				|| typeEncoding.equals(_POST_RESPONSE_ENCODING_NAME_)) {
+		if (typeEncoding.equals(_GET_RESPONSE_ENCODING_NAME_) || typeEncoding.equals(_POST_RESPONSE_ENCODING_NAME_)) {
 			try {
 				RecordValue value = (RecordValue) decodingHypothesis.newInstance();
 				String[] responseFieldsNames = value.getFieldNames();
@@ -108,7 +110,9 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 							((UniversalCharstringValue) aField).setString(headerValue);
 							value.setField(responseFieldsNames[i], aField);
 						}
-					} else {
+					}
+
+					else {
 						return value;
 					}
 				}
@@ -245,7 +249,11 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 			((FloatValue) field).setFloat(Float.parseFloat(obj.toString()));
 			break;
 		case TciTypeClass.INTEGER:
-			((IntegerValue) field).setInt(Integer.parseInt(obj.toString()));
+			try {
+				((IntegerValue) field).setInt(Integer.parseInt(obj.toString()));
+			} catch (NumberFormatException nex) {
+				((IntegerValue) field).setBigInt(new BigInteger(obj.toString()));
+			}
 			break;
 		case TciTypeClass.BOOLEAN:
 			((BooleanValue) field).setBoolean(Boolean.parseBoolean(obj.toString()));
@@ -364,13 +372,13 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 				builder.append("\n");
 			} else {
 				if (response instanceof ContentResponse) {
-					builder.append("Content-Length: ").append(((ContentResponse) response).getContent().length).append("\n");
+					builder.append("Content-Length: ").append(((ContentResponse) response).getContent().length)
+							.append("\n");
 				}
 			}
 		}
 		if (response instanceof ContentResponse) {
-			builder.append("\n").append(
-					((ContentResponse) response).getContentAsString()).append("\n");
+			builder.append("\n").append(((ContentResponse) response).getContentAsString()).append("\n");
 			builder.append("\n");
 		}
 	}
@@ -494,10 +502,8 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 	/**
 	 * Encodes path elements of a REST message
 	 * 
-	 * @param restMessage
-	 *            the REST message
-	 * @param baseUrl
-	 *            a non-null default baseURL to be used
+	 * @param restMessage the REST message
+	 * @param baseUrl     a non-null default baseURL to be used
 	 * @return the path to be used for the REST message, or null if some error
 	 *         occurred
 	 */
@@ -558,6 +564,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 				case TciTypeClass.CHARSTRING:
 					uriEncodedFieldValue = ((CharstringValue) field).getString().replace("+", "%2");
 					break;
+
 				default:
 					logError("Unsupported field type " + field.getType().getName());
 					continue;
@@ -576,10 +583,9 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 	 * if there is no value encoding or "." is used a mapped fieldName then the
 	 * value of the parameter fieldName is being returned
 	 * 
-	 * @param val
-	 *            the TciValue to be mapped, typically a field of a record value
-	 * @param fieldName
-	 *            the name of the field
+	 * @param val       the TciValue to be mapped, typically a field of a record
+	 *                  value
+	 * @param fieldName the name of the field
 	 * @return fieldName if valueEncoding contains "." or is null.
 	 */
 	private String getMappedFieldName(Value val, String fieldName) {
