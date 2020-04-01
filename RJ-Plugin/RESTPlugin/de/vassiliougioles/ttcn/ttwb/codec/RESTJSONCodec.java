@@ -61,6 +61,10 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 		ResponseMessage rm = new ResponseMessage();
 		HttpParser hParser = new HttpParser(rm);
 		ByteBuffer bb = ByteBuffer.wrap(rcvdMessage.getEncodedMessage());
+		// FIXME: This hack is required due to a bug introduced in with TTwb 27 or later.
+		// decodingHypothesis.getEncoding() returns errornously the module encoding, and not the one 
+		// attached to the type.
+		String typeEncoding = decodingHypothesis.newInstance().getValueEncoding();
 
 		while (!hParser.isComplete()) {
 			hParser.parseNext(bb);
@@ -68,8 +72,8 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 
 		HttpFields headers = rm.getHeaderFields();
 
-		if (decodingHypothesis.getTypeEncoding().equals(_GET_RESPONSE_ENCODING_NAME_)
-				|| decodingHypothesis.getTypeEncoding().equals(_POST_RESPONSE_ENCODING_NAME_)) {
+		if (typeEncoding.equals(_GET_RESPONSE_ENCODING_NAME_)
+				|| typeEncoding.equals(_POST_RESPONSE_ENCODING_NAME_)) {
 			try {
 				RecordValue value = (RecordValue) decodingHypothesis.newInstance();
 				String[] responseFieldsNames = value.getFieldNames();
@@ -113,7 +117,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 				// Well, if we can't parse it, we can't parse it.
 				return null;
 			}
-		} else if (decodingHypothesis.getTypeEncoding().equals(_HTTP_RESPONSE_ENCODING_NAME_)) {
+		} else if (typeEncoding.equals(_HTTP_RESPONSE_ENCODING_NAME_)) {
 			RecordValue httpResponseValue = (RecordValue) decodingHypothesis.newInstance();
 			httpResponseValue.setField("statusLine", decodeStatusLine(httpResponseValue.getField("statusLine"), rm));
 			httpResponseValue.setField("headers", decodeHeader(httpResponseValue.getField("headers"), rm));
