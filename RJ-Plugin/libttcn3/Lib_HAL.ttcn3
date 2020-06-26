@@ -1,0 +1,39 @@
+module Lib_HAL {
+	import from Lib_HTTP all; 
+	
+	external function _getPath<in type T>(T aRequestType) return string;
+	
+	type record Href { string href }
+
+	  type record of Curie Curies;
+	  type record Curie {
+		  string name, 
+		  string href,
+		  boolean templated
+	  } 
+	  
+	 	  
+	  /* 
+	   * 
+	    {
+		    "_links": {
+		        "self": { "href": "/pet/123" },
+		        "curies": [{ "name": "ps", "href": "http://petstore.io/docs/rels/{rel}", "templated": true }],
+		        "next": { "href": "/pet/124" },
+		        "previous": { "href": "/pet/122" },
+		        "ps:findByStatus": {
+		            "href": "/pet/findByStatus{?status}",
+		            "templated": true
+		        }
+		    },
+		    "petName": "MyDog",
+		    "status": "available"
+		    }
+		}
+
+	   */
+
+}
+with {
+	encode "HTTP/json"
+}

@@ -1,0 +1,29 @@
+module openapiv3 {
+	import from Lib_HTTP all;
+
+	type integer int32 (-2147483648 .. 2147483647); // signed 32 bits
+	type integer int64 (-9223372036854775808 .. 9223372036854775807); // signed
+																	  // 64 bits
+																	  // (a.k.a
+																	  // long)
+	// type float float
+	type float double;
+	type universal charstring string;
+	type string byte; // base64 encoded characters
+	type octetstring binary; // any sequence of octets
+	// type boolean boolean;
+	type string date; // As defined by full-date - RFC3339
+	type string dateTime; // As defined by date-time - RFC3339
+	type string password; // A hint to UIs to obscure input.
+	group aux {
+		// If this field does not exist, it means no content is returned as part
+		// of the response.
+		type HTTPResponse noContext
+		with {
+			encode "HTTP/response"
+		}
+	}
+}
+with {
+	encode "RESTful"
+}

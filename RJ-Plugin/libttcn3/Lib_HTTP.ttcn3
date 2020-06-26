@@ -1,4 +1,10 @@
-module Lib_Http {
+module Lib_HTTP {
+	type universal charstring string;
+
+	type record HTTPRequest {
+		string method, string basePath optional, string path, Body body optional
+	}
+
 	type record HTTPResponse {
 		StatusLine statusLine, set of Header headers, Body body optional
 	}
@@ -7,14 +13,39 @@ module Lib_Http {
 	}
 
 	type record StatusLine {
-		integer statusCode, charstring reasonPhrase optional
+		integer statusCode, string reasonPhrase optional
 	}
 
 	type record Body {
-		charstring messageBodyTxt optional, octetstring messageBodyRaw optional
+		string messageBodyTxt optional, octetstring messageBodyRaw optional
 	}
 
 	type record Header {
-		charstring name, charstring val
+		string name, string val
 	}
+
+
+	type record RESTAPIconfig {
+		string baseUrl, string authorization optional
+	}
+
+
+	type port HTTPPort message {
+		in HTTPResponse;
+		out all;
+		map param (RESTAPIconfig config);
+	}
+
+	type component HTTPClient {
+		port HTTPPort service;
+	}
+
+	type component HTTPServer {
+		port HTTPPort server;
+	}
+	
+	external function base64Encode(string msg) return charstring;
+}
+with {
+	encode "HTTP/json"
 }
