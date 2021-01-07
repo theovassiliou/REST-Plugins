@@ -56,6 +56,10 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 	public void setBaseUrl(String baseUrl) {
 		this.baseURL = baseUrl;
 	}
+	
+	public String getBaseUrl() {
+		return this.baseURL;
+	}
 
 	public void setAuthorization(String authorization) {
 		this.authorization = authorization;
@@ -455,7 +459,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 		// Pass 3: Build (additional) query params
 		String queryParams = ParamField.buildQueryParams(params);
 		// Concat (1) and (3)
-		String strEndpoint = saveURLConcat(baseURL, endPoint, queryParams);
+		String strEndpoint = saveURLConcat(getBaseUrl(), endPoint, queryParams);
 		// Instantiate HttpClient
 		HttpClient httpClient = new HttpClient(new SslContextFactory());
 		// Configure HttpClient, for example:

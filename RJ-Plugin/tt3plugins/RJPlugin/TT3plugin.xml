@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?> 
 <!DOCTYPE plugin PUBLIC "-//TESTING TECH//DTD TT3plugin//2.0" "TT3plugin.dtd"> 
-<plugin id="de.vassiliougioles.ttcn.ttwb.codec.RJPlugin" name="RJPlugin" provider-name="Vassiliou-Gioles" version="1.0.0">
+<plugin id="de.vassiliougioles.ttcn.ttwb.codec.RJPlugin" name="RJPlugin" provider-name="Vassiliou-Gioles" version="1.1.0">
   <runtime>
-    <library name="../../build/RESTPlugin"/>
-    <library name="lib/json-simple-1.1.1.jar"/>
     <library name="lib/jetty-all-9.4.2.v20170220-uber.jar"/>
+    <library name="lib/json-simple-1.1.1.jar"/>
+    <library name="../../build/RESTPlugin"/>
   </runtime>
   <dependency/>
   <extension point="com.testingtech.ttcn.extension.CodecProvider">
@@ -12,6 +12,7 @@
     <parameter id="description" value="A straight forward REST/JSON encoder"/>
     <parameter id="class" value="de.vassiliougioles.ttcn.ttwb.codec.RESTJSONCodecProvider"/>
     <parameter id="encoding"/>
+    <parameter id="apiOnly" value="false"/>
   </extension>
   <extension point="com.testingtech.ttcn.tri.extension.PortPluginProvider">
     <parameter id="name" value="RESTPort"/>

@@ -1,5 +1,0 @@
-module AllExampleTestsuite {
-	import from REST_GET_TestSeries1 all; 
-	import from REST_POST_TestSeries1 all;
-	
-}

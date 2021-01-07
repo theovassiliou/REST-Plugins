@@ -14,7 +14,7 @@ module Lib_HAL {
 	  
 	 	  
 	  /* 
-	   * 
+	   *  Example
 	    {
 		    "_links": {
 		        "self": { "href": "/pet/123" },
