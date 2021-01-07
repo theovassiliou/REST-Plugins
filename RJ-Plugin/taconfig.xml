@@ -1,16 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testadapter>
-  <codec encode="RESTfull/json">
-    <plugin id="de.vassiliougioles.ttcn.ttwb.codec.RJPlugin">
-      <parameter id="class" value="de.vassiliougioles.ttcn.ttwb.codec.RESTJSONCodecProvider"/>
-    </plugin>
-  </codec>
-  <codec encode="REST/get">
-    <plugin id="de.vassiliougioles.ttcn.ttwb.codec.RJPlugin">
-      <parameter id="class" value="de.vassiliougioles.ttcn.ttwb.codec.RESTJSONCodecProvider"/>
-    </plugin>
-  </codec>
-  <codec encode="HTTP/response">
+  <codec encode="RESTful">
     <plugin id="de.vassiliougioles.ttcn.ttwb.codec.RJPlugin">
       <parameter id="class" value="de.vassiliougioles.ttcn.ttwb.codec.RESTJSONCodecProvider"/>
     </plugin>
@@ -20,7 +10,7 @@
       <parameter id="class" value="de.vassiliougioles.ttcn.ttwb.port.RESTPortPlugin"/>
     </plugin>
     <parameter id="xtri" value="false"/>
+    <parameter id="rt" value="false"/>
     <parameter id="default" value="true"/>
-    <parameter id="portType" value="RESTfull"/>
   </port>
 </testadapter>
