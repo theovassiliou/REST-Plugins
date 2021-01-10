@@ -3,7 +3,7 @@ module PetStoreExample {
 	import from openapiv2 all;
 
 
-	const charstring BASE_URL := "http://" & host & basePath;
+	const charstring BASE_URL := "https://" & host & basePath;
 	modulepar
 		charstring
 			AUTHORIZATION :=
