@@ -15,13 +15,13 @@ See [Installation](Installation.md) on how to install RJ-Plugin in you TTworkben
 
 ## Examples
 
-As examples we provide this plugin with some TTCN-3 example test cases for a publicly available API. 
+As example this plugin provides with some TTCN-3 example test cases for a publicly available API. 
 
  
 ### Swagger PetStore example
  
 The swagger petstore API implementation is available online at [petstore.swagger.io](petstore.swagger.io) or as docker container. 
-The example comes preconfigured to be executed against the online web-service. Take a look at the [TTCN-3 source file](ttcn3/PetStoreExample.ttcn3)
+The example comes preconfigured to be executed against the online web-service. Take a look at the [TTCN-3 source file](ttcn3/PetStoreExample.ttcn3) to get an idea 
  
 However, if you would like to have more control on the communication you can download the Swagger PetStore as docker container as follows.
  
