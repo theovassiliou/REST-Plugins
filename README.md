@@ -1,5 +1,6 @@
 # REST-Plugins
 
-This is the home for various TTworkbench plugins and documentation that enable a TTCN-3 based testing of RESTful microseverics. It contains
+This projects is the home of various TTCN-3 and in particular TTworkbench related ressources for testing RESTful web-services, like micro-services or lambda/functions/etc. 
 
-- RJ-Plugin: A plugin for HTTP based RESTful/JSON communication 
+- [RJ-Plugin](https://github.com/theovassiliou/REST-Plugins/tree/master/RJ-Plugin "RJ-Plugin") contains a TTworkbench plugin to enable RESTful/json based communication
+
