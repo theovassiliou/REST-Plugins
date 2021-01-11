@@ -1,0 +1,556 @@
+module PetStoreExample {
+	import from Lib_HTTP all except {type string;};
+	import from openapiv2 all;
+
+
+	const charstring BASE_URL := "https://" & host & basePath;
+	modulepar
+		charstring
+			AUTHORIZATION :=
+			"Basic c2gtYWRtaW5AdmFzcjjsakk1LXBvaGwuYmVybGluOkp1UGVCbzE3Ng=="; // Example:
+
+	template GetPetById getPetById(integer petId_) := {petId := petId_}
+
+
+	template FindPetsByStatus findPetByStatus := {
+		status := {"available", "sold"}
+	}
+	template FindPetsByStatusResponse petFound := ?;
+
+	testcase SendFindByStatusTC() runs on PetStoreClient system PetStoreServer {
+		map(mtc:service, system:server)
+		param (RESTAPIconfig:{baseUrl := BASE_URL,authorization := omit});
+
+		service.send(findPetByStatus);
+		timer t;
+		t.start(5.0);
+
+		alt {
+		[] service
+		   .receive(FindPetsByStatusSuccess:
+					{pets := {?, ?, ?, ?, ?, ?, ?, ?, ?, ?}}) {
+				t.stop;
+				setverdict(pass);
+			}
+		[] service.receive {
+				setverdict(fail);
+			}
+		[] t.timeout {
+				setverdict(fail, "Server was not responding. Check base url");
+			}
+		}
+	}
+
+	testcase SendFindByStatusTCUnion()
+		runs on PetStoreClient system PetStoreServer {
+		map(mtc:service, system:server) param (configNoAuth);
+
+		service.send(findPetByStatus);
+		timer t;
+		t.start(5.0);
+
+		alt {
+		[] service.receive(FindPetsByStatusResponse:{_200 := ?}) {
+				t.stop;
+				setverdict(pass);
+			}
+		[] service.receive(HTTPResponse:?) {
+				t.stop;
+				setverdict(inconc);
+			}
+		[] service.receive {
+				setverdict(fail);
+			}
+		[] t.timeout {
+				setverdict(fail, "Server was not responding. Check base url");
+			}
+		}
+	}
+
+
+
+	testcase TestAddPet() runs on PetStoreClient system PetStoreServer {
+		map(mtc:service, system:server) param (configNoAuth);
+
+		service
+		.send(AddPet:
+			  {
+				  body := {
+					  id := 1627,
+					  category := {22, "TestCategory"},
+					  name := "MyDogIsGreat",
+					  photoUrls := {
+						  "https://www.deine-tierwelt.de/magazin/wp-content/uploads/sites/2/2013/10/Australian-Cattle-Dog-1000x570.jpg"
+					  },
+					  tags := {{33,"PerfectDog"}},
+					  status := "available"
+				  }
+			  });
+		timer t;
+		t.start(5.0);
+
+		alt {
+		[] service.receive(AddPetResponse:?) {
+				t.stop;
+				setverdict(pass);
+			}
+		[] service.receive(HTTPResponse:?) {
+				setverdict(fail);
+			}
+		[] t.timeout {
+				setverdict(fail, "Server was not responding. Check base url");
+			}
+		}
+	}
+
+	testcase TestAddPetv2() runs on PetStoreClient system PetStoreServer {
+		map(mtc:service, system:server) param (configNoAuth);
+
+		service
+		.send(AddPet:
+			  {
+				  body := {
+					  id := 1627,
+					  category := {22, "TestCategory"},
+					  name := "MyDogIsGreat",
+					  photoUrls := {
+						  "https://www.deine-tierwelt.de/magazin/wp-content/uploads/sites/2/2013/10/Australian-Cattle-Dog-1000x570.jpg"
+					  },
+					  tags := {{33,"PerfectDog"}},
+					  status := "available"
+				  }
+			  });
+		timer t;
+		t.start(5.0);
+
+		alt {
+		[] service.receive(AddPetResponse:?) {
+				t.stop;
+				setverdict(pass);
+			}
+		[] service.receive(HTTPResponse:?) {
+				setverdict(fail);
+			}
+		[] t.timeout {
+				setverdict(fail, "Server was not responding. Check base url");
+			}
+		}
+	}
+
+
+	function f_AddPet(Pet p)
+		runs on PetStoreClient system PetStoreServer return integer {
+		service.send(AddPet:{body := p});
+		timer t;
+		t.start(5.0);
+		var Lib_HTTP.HTTPResponse resp;
+		alt {
+		[] service.receive(HTTPResponse:?) -> value resp {
+				setverdict(pass);
+				return resp.statusLine.statusCode;
+			}
+		[] t.timeout {
+				setverdict(fail, "Server was not responding. Check base url");
+			}
+		}
+		return -1;
+	}
+
+
+
+
+	testcase UpdatePetByFormTC() runs on PetStoreClient system PetStoreServer {
+		map(mtc:service, system:server) param (configNoAuth);
+
+		service.send(UpdatePetWithForm:{1627,{"MyDog","sold"}});
+		timer t;
+		t.start(5.0);
+
+		alt {
+		[] service.receive(UpdatePetWithFormResponse:?) {
+				t.stop;
+				setverdict(pass);
+			}
+		[] service.receive {
+				setverdict(fail);
+			}
+		[] t.timeout {
+				setverdict(fail, "Server was not responding. Check base url");
+			}
+		}
+	}
+
+
+	testcase GetPetbyIdTC() runs on PetStoreClient system PetStoreServer {
+		map(mtc:service, system:server) param (configNoAuth);
+
+		service.send(getPetById(1627));
+		timer t;
+		t.start(5.0);
+		var Pet thePet;
+		alt {
+		[] service.receive(GetPetByIdResponse:{_200 := ?}) {
+				t.stop;
+				setverdict(pass);
+			}
+		[] service.receive(GetPetByIdResponse:{_404 := ?}) {
+				t.stop;
+				setverdict(pass);
+			}
+		[] service.receive(GetPetByIdResponse:?) {
+				t.stop;
+				setverdict(inconc);
+			}
+		[] service.receive {
+				setverdict(fail);
+			}
+		[] t.timeout {
+				setverdict(fail, "Server was not responding. Check base url");
+			}
+		}
+	}
+
+	testcase DeletePetTC() runs on PetStoreClient system PetStoreServer {
+		map(mtc:service, system:server) param (configNoAuth);
+
+		service.send(DeletePet:{petId := 1627});
+		timer t;
+		t.start(5.0);
+		var Pet thePet;
+		alt {
+		[] service.receive(DeletePetResponse:{_404 := ?}) {
+				t.stop;
+				setverdict(pass);
+			}
+		[] service.receive(HTTPResponse:?) {
+				t.stop;
+				setverdict(inconc);
+			}
+		[] service.receive {
+				setverdict(fail);
+			}
+		[] t.timeout {
+				setverdict(fail, "Server was not responding. Check base url");
+			}
+		}
+	}
+
+
+	template RESTAPIconfig baseConfig := {baseUrl := BASE_URL}
+	template RESTAPIconfig configNoAuth modifies baseConfig := {
+		baseUrl := BASE_URL, authorization := omit
+	}
+
+	template RESTAPIconfig config(string auth) modifies baseConfig := {
+		authorization := auth
+	}
+
+
+	/* Typically in a file like xy_Operations.ttcn3 */
+	group Operations {
+		// POST /pet/{petId}/uploadImage
+		// @desc Uploads an image
+		// @operationId UploadFile
+		group petPetIdUploadImage {
+			type record UploadFile {
+				int64 petId, string additionalMetadata, file file
+			}
+			with {
+				encode "REST/post";
+				variant "path: /pet/{petId}/uploadImage";
+				encode (additionalMetadata) "body/formdata";
+				encode (file) "body/formdata"
+			}
+
+			//
+			// 200 - successful operation
+			// 400 - Invalid ID supplied
+			// 404 - Pet not found
+			type union UploadFileResponse {
+				ApiResponse _200
+			}
+			with {
+				encode "REST/getResponse";
+				encode (_200) "body/json"
+			}
+		}
+
+		// POST /pet
+		// @desc Add a new pet to the store
+		// @operationId addPet
+		type record AddPet {
+			Pet body
+		}
+		with {
+			encode "REST/post";
+			variant "path: /pet";
+			encode (body) "body/json"
+		}
+
+		// 405 - Invalid input
+		type union AddPetResponse {
+			Pet _200, noContext _405
+		}
+		with {
+			encode "REST/postResponse";
+			encode (_200) "body/json"
+		}
+
+
+
+
+		// PUT /pet
+		// @desc Update an existing pet
+		// @operationId updatePet
+		type record UpdatePet {
+			Pet body
+		}
+		with {
+			encode "REST/put";
+			variant "path: /pet";
+			encode (body) "body/json"
+		}
+
+		// 400 - Invalid ID supplied
+		// 404 - Pet not found
+		// 405 - Validation exception
+		type union UpdatePetResponse {
+			noContext _400, noContext _404, noContext _405
+		}
+		with {
+			encode "REST/putResponse"
+		}
+
+
+		// GET /pet/findByStatus
+		// @desc Finds Pets by status
+		// @operationId findPetsByStatus
+		// @example GET /pet/findByStatus?status=ab&status=cd
+		type record FindPetsByStatus {
+			record of StatusEnum status
+		}
+		with {
+			encode "REST/get";
+			variant "path: /pet/findByStatus";
+			encode (status) "query"
+		}
+
+		// 200 - successful operation
+		// 400 - Invalid status value
+		type union FindPetsByStatusResponse {
+			record of Pet _200, noContext _400
+		}
+		with {
+			encode "REST/getResponse";
+			encode (_200) "body/json"
+		}
+
+		// Successfull return of operation
+		type record FindPetsByStatusSuccess {
+			record of Pet pets
+		}
+		with {
+			encode "REST/getResponse";
+			encode (pets) "body/json"
+		}
+
+		// GET /pet/findByTags
+		// @desc Finds Pets by tags
+		// @operationId findPetsByTags
+		type record FindPetsByTags {
+			record of Tag tags
+		}
+		with {
+			encode "REST/get";
+			variant "path: /pet/findByTags";
+			encode (tags) "query"
+		}
+
+		// 200 - successful operation
+		// 400 - Invalid tag value
+		type union FindPetsByTagsResponse {
+			record of Pet _200, noContext _400
+		}
+		with {
+			encode "REST/getResponse";
+			encode (_200) "body/json"
+		}
+
+
+
+		// GET /pet/{petId}
+		// @desc Find pet by ID
+		// operationIdgetPetById
+		type record GetPetById {
+			int64 petId
+		}
+		with {
+			encode "REST/get";
+			variant "path: /pet/{petId}"
+		}
+
+		//
+		// 200 - successful operation
+		// 400 - Invalid ID supplied
+		// 404 - Pet not found
+		type union GetPetByIdResponse {
+			Pet _200, noContext _400, noContext _404
+		}
+		with {
+			encode "REST/getResponse";
+			encode (_200) "body/json"
+		}
+
+
+		// POST /pet/{petId}
+		// @desc Updates a pet in the store with form data
+		// @operationId updatePetWithForm
+		type record UpdatePetWithForm {
+			int64 petId,
+			record {
+				string name optional, string status optional
+			} form
+		}
+		with {
+			encode "REST/post";
+			variant "path: /pet/{petId}";
+			encode (form) "body/formdata"
+		}
+
+
+		//
+		// 405 - Invalid input
+		type union UpdatePetWithFormResponse {
+			ApiResponse _415, noContext _405
+		}
+		with {
+			encode "REST/postResponse";
+			encode (_415) "body/json"
+		}
+
+
+		// DELETE /pet/{petId}
+		// @desc Deletes a pet
+		// @operationId deletePet
+		type record DeletePet {
+			string api_key optional, int64 petId
+		}
+		with {
+			encode "REST/delete";
+			variant "path: /pet/{petId}";
+			encode (api_key) "header"
+		}
+
+		//
+		// 400 - Invalid ID supplied
+		// 404 - Pet not found
+		type union DeletePetResponse {
+			noContext _400, noContext _404
+		}
+		with {
+			encode "REST/deleteResponse"
+		}
+
+	}
+	/* Typically in a file like xy_Models.ttcn3 */
+	// #definitons
+	group Models {
+		group Definitions {
+			type record ApiResponse {
+				integer code, string _type, string _message
+			}
+			with {
+				// reserved name mapping
+				variant (_type) "type";
+				variant (_message) "message"
+			}
+
+			type set Category {
+				int64 id, string name
+			}
+
+			type set Pet {
+				int64 id optional,
+				Category category optional,
+				string name,
+				record of string photoUrls,
+				record of Tag tags optional,
+				string status optional
+			}
+
+			type record Tag {
+				int64 id, string name
+			}
+
+
+			type string StatusEnum ("available", "pending", "sold");
+
+			type set Order {
+				integer id,
+				integer petId,
+				integer quantity,
+				string shipDate,
+				StatusEnum status,
+				boolean complete
+			}
+
+
+			type set User {
+				integer _id,
+				string username,
+				string firstName,
+				string lastName,
+				string email,
+				string password,
+				string phone,
+				integer userStatus
+			}
+		}
+
+	}
+
+	/* Typically in a file like xy_Components.ttcn3 */
+	group Components {
+		modulepar charstring host := "petstore.swagger.io";
+		const charstring basePath := "/v2";
+		const charstring schemes[2] := {"http", "https"};
+
+		type port RESTful message {
+			out
+			FindPetsByStatus,
+			UploadFile,
+			AddPet,
+			UpdatePet,
+			FindPetsByTags,
+			GetPetById,
+			UpdatePetWithForm,
+			DeletePet;
+			in
+			FindPetsByStatusSuccess,
+			UploadFileResponse,
+			AddPetResponse,
+			UpdatePetResponse,
+			FindPetsByStatusResponse,
+			FindPetsByTagsResponse,
+			GetPetByIdResponse,
+			UpdatePetWithFormResponse,
+			DeletePetResponse;
+			in HTTPResponse;
+			map param (RESTAPIconfig config);
+		}
+		with {
+			encode "RESTful"
+		}
+
+		type component PetStoreClient {
+			port RESTful service;
+		}
+
+		type component PetStoreServer {
+			port RESTful server;
+		}
+	}
+}
+with {
+	encode "RESTful/json"
+}
