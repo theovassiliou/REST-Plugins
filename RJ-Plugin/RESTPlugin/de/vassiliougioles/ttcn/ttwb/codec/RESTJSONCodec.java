@@ -764,9 +764,9 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 
 		dumpMessage.append(request.getMethod() + " " + request.getURI() + " " + request.getVersion() + "\n");
 
-		for (Iterator iterator = templateHeadfields.iterator(); iterator.hasNext();) {
-			HeaderField headerField = (HeaderField) iterator.next();
-			request.header(headerField.getHeaderName(), ((UniversalCharstringValue) headerField.getValue()).toString());
+		for (Iterator<HeaderField> iterator = templateHeadfields.iterator(); iterator.hasNext();) {
+			HeaderField headerField = iterator.next();
+			request.header(headerField.getHeaderName(), ((UniversalCharstringValue) headerField.getValue()).getString());
 		}
 
 		HttpFields fields = request.getHeaders();

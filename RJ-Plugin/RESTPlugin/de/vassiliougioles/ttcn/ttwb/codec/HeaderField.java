@@ -146,7 +146,8 @@ public class HeaderField implements Value, TTCNRESTMapping {
 
 		for (HeaderField headerField : headers) {
 			if (headerField.isHeader()) {
-				request.header(headerField.getHeaderName(), headerField.getHeaderValue());
+				// FIXME: Why is this in?
+				// request.header(headerField.getHeaderName(), headerField.getHeaderValue());
 				sb.append(headerField.getHeaderName() + ": " + headerField.getHeaderValue() + "\n");
 			}
 		}

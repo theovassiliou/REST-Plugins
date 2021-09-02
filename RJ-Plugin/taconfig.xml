@@ -12,5 +12,6 @@
     <parameter id="xtri" value="false"/>
     <parameter id="rt" value="false"/>
     <parameter id="default" value="true"/>
+    <parameter id="portType" value="RequestTests.HTTPPort"/>
   </port>
 </testadapter>

@@ -13,6 +13,7 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.etsi.ttcn.tci.BooleanValue;
 import org.etsi.ttcn.tci.CharstringValue;
 import org.etsi.ttcn.tci.RecordValue;
 import org.etsi.ttcn.tci.UniversalCharstringValue;
@@ -40,6 +41,7 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 
 	private static final long serialVersionUID = -6523964658234648218L;
 	private String baseURL = _DEFAULT_BASE_URL_;
+	private boolean unitTestMode = false;
 
 	public String getBaseURL() {
 		return baseURL;
@@ -85,7 +87,8 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 
 		setBaseURL(_DEFAULT_BASE_URL_);
 		setAuthorization(_DEFAULT_AUTHORIZATION_);
-
+		this.unitTestMode  = false; 
+		
 		this.defaultHeaders = null;
 
 		@SuppressWarnings("unchecked")
@@ -106,12 +109,14 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 				if (triParam.getParameterName().equals(_CONFIG_AUTH_FIELD_NAME_)) {
 					setAuthorization(((CharstringValue) param).getString());
 				}
+
 //				if (triParam.getParameterName().equals(_DEFAULT_HEADERS_FIELD_NAME_)) {
 //					setDefaultHeadersFromValues(param);
 //				}
 
 			}
 		}
+
 		return TriStatusImpl.OK;
 
 	}
@@ -142,8 +147,9 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 			sendMessage = ((TciValueContainer) triSendMessage).getValue();
 		}
 
-		assert tsiPortId.getPortTypeName().split("\\.")[1].equals(_PORT_TYPE_NAME_) : "We only handle operations on "
-				+ _PORT_TYPE_NAME_ + " ports";
+		// assert tsiPortId.getPortTypeName().split("\\.")[1].equals(_PORT_TYPE_NAME_) :
+		// "We only handle operations on "
+		// + _PORT_TYPE_NAME_ + " ports";
 
 		StringBuilder dumpMessage = new StringBuilder();
 		extractSendToInformation(sutAddress);
@@ -174,17 +180,22 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 				Request request = restCodec.createRequest(httpClient, "GET", getAuthorization(), strEndpoint,
 						dumpMessage, headers);
 				dumpMessage.append(HeaderField.fillRequest(request, headers));
-
-				Response response = sendRequest(request);
-				if (response != null) {
-					StringBuilder builder = new StringBuilder();
-					restCodec.encodeResponseMessage(response, builder);
-					TriMessage rcvMessage = TriMessageImpl.valueOf(builder.toString().getBytes(StandardCharsets.UTF_8));
-					// enqueue the URL as response address to be able to identify it in TTCN-3
-					TriAddressImpl rcvSutAddress = new TriAddressImpl(strEndpoint.getBytes());
-					triEnqueueMsg(tsiPortId, rcvSutAddress, componentId, rcvMessage);
+				if (unitTestMode) {
+					triEnqueueMsg(tsiPortId, null, componentId,
+							TriMessageImpl.valueOf(dumpMessage.toString().getBytes(StandardCharsets.UTF_8)));
+					return TriStatusImpl.OK;
+				} else {
+					Response response = sendRequest(request);
+					if (response != null) {
+						StringBuilder builder = new StringBuilder();
+						restCodec.encodeResponseMessage(response, builder);
+						TriMessage rcvMessage = TriMessageImpl
+								.valueOf(builder.toString().getBytes(StandardCharsets.UTF_8));
+						// enqueue the URL as response address to be able to identify it in TTCN-3
+						TriAddressImpl rcvSutAddress = new TriAddressImpl(strEndpoint.getBytes());
+						triEnqueueMsg(tsiPortId, rcvSutAddress, componentId, rcvMessage);
+					}
 				}
-
 			} catch (Exception e1) {
 				e1.printStackTrace();
 				new TriStatusImpl(e1.getMessage());
@@ -303,6 +314,9 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 				} else if (string.equals(_CONFIG_AUTH_FIELD_NAME_) && !rv.getField(string).notPresent()) {
 					UniversalCharstringValue cv = (UniversalCharstringValue) rv.getField(string);
 					setAuthorization(cv.getString());
+				} else if (string.equals(_CONFIG_UNIT_TEST_MODE_) && !rv.getField(string).notPresent()) {
+					BooleanValue bv = (BooleanValue) rv.getField(string);
+					this.unitTestMode = bv.getBoolean();
 				}
 			}
 		}

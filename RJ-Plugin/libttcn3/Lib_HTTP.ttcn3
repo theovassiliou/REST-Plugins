@@ -26,7 +26,8 @@ module Lib_HTTP {
 
 
 	type record RESTAPIconfig {
-		string baseUrl, string authorization optional
+		string baseUrl, string authorization optional,
+		boolean unitTestMode optional
 	}
 
 

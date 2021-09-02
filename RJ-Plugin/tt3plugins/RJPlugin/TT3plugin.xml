@@ -2,7 +2,7 @@
 <!DOCTYPE plugin PUBLIC "-//TESTING TECH//DTD TT3plugin//2.0" "TT3plugin.dtd"> 
 <plugin id="de.vassiliougioles.ttcn.ttwb.codec.RJPlugin" name="RJPlugin" provider-name="Vassiliou-Gioles" version="1.1.0">
   <runtime>
-    <library name="lib/jetty-all-9.4.2.v20170220-uber.jar"/>
+    <library name="lib/jetty-all-9.4.37.v20210219-uber.jar"/>
     <library name="lib/json-simple-1.1.1.jar"/>
     <library name="../../build/RESTPlugin"/>
   </runtime>

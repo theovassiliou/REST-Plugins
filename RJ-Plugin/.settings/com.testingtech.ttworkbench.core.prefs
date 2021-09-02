@@ -18,6 +18,6 @@ ttcn3.mlf_radiobutton=1
 ttcn3.mlf_ta_config=taconfig.xml
 ttcn3.output_folder=//PROJECT_NAME//ttcn3build
 ttcn3.output_same_as_src=false
-ttcn3.source_folders=//PROJECT_NAME//ttcn3\n//PROJECT_NAME//libttcn3
+ttcn3.source_folders=//PROJECT_NAME//ttcn3\n//PROJECT_NAME//libttcn3\n//PROJECT_NAME//test
 ttcn3.use_bigint=true
 ttcn3.use_destination_path_for_ttcn3view=false

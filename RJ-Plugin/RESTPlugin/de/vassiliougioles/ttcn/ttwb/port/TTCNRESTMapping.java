@@ -10,6 +10,7 @@ public interface TTCNRESTMapping {
 	final String _DEFAULT_HEADERS_FIELD_NAME_ = "defaultHeaders";
 	final String _CONFIG_BASEURL_FIELD_NAME_ = "baseUrl";
 	final String _CONFIG_AUTH_FIELD_NAME_ = "authorization";
+	final String _CONFIG_UNIT_TEST_MODE_ = "unitTestMode"; 
 	final String _CONTENT_JSON_ENCODING_ = "application/json";
 	final String _CONTENT_FORMDATA_ENCODING_ = "application/x-www-form-urlencoded";
 
