@@ -42,6 +42,12 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 	private static final long serialVersionUID = -6523964658234648218L;
 	private String baseURL = _DEFAULT_BASE_URL_;
 	private boolean unitTestMode = false;
+	private String authorization = _DEFAULT_AUTHORIZATION_;
+	private RESTJSONCodec restCodec = null;
+
+	public ISAPlugin getPortPlugin() {
+		return new RESTPortPlugin();
+	}
 
 	public String getBaseURL() {
 		return baseURL;
@@ -52,34 +58,14 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 		restCodec.setBaseUrl(baseURL);
 	}
 
+
 	public String getAuthorization() {
 		return authorization;
 	}
-
-	private String authorization = _DEFAULT_AUTHORIZATION_;
-	private RESTJSONCodec restCodec = null;
-	private List<HeaderField> defaultHeaders = null;
-
-	public ISAPlugin getPortPlugin() {
-		return new RESTPortPlugin();
-	}
-
 	private void setAuthorization(String authorization) {
 		this.authorization = authorization;
 		restCodec.setAuthorization(authorization);
 	}
-
-//	private void setDefaultHeadersFromValues(Value dh) {
-//		if (dh.getType().getTypeClass() != TciTypeClass.RECORD_OF) {
-//			return;
-//		}
-//
-//		if (this.defaultHeaders == null) {
-//			this.defaultHeaders = new ArrayList<HeaderField>();
-//		}
-//
-//		this.defaultHeaders.addAll(HeaderField.collectHeaders(dh, null));
-//	}
 
 	@Override
 	public TriStatus triMapParam(TriPortId compPortId, TriPortId tsiPortId, TriParameterList paramList) {
@@ -89,8 +75,6 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 		setAuthorization(_DEFAULT_AUTHORIZATION_);
 		this.unitTestMode  = false; 
 		
-		this.defaultHeaders = null;
-
 		@SuppressWarnings("unchecked")
 		Enumeration<TriParameter> parameterList = paramList.getParameters();
 		while (parameterList.hasMoreElements()) {
@@ -109,10 +93,6 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 				if (triParam.getParameterName().equals(_CONFIG_AUTH_FIELD_NAME_)) {
 					setAuthorization(((CharstringValue) param).getString());
 				}
-
-//				if (triParam.getParameterName().equals(_DEFAULT_HEADERS_FIELD_NAME_)) {
-//					setDefaultHeadersFromValues(param);
-//				}
 
 			}
 		}
