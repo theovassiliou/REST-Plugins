@@ -52,17 +52,22 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 	static private JSONParser parser = new JSONParser();
 	private String baseURL = null;
 	private String authorization = null;
+	private boolean dumpHeaders = true;
 
 	public void setBaseUrl(String baseUrl) {
 		this.baseURL = baseUrl;
 	}
-	
+
 	public String getBaseUrl() {
 		return this.baseURL;
 	}
 
 	public void setAuthorization(String authorization) {
 		this.authorization = authorization;
+	}
+
+	public void setDumpHeaders(boolean dumpHeaders) {
+		this.dumpHeaders = dumpHeaders;
 	}
 
 	private Value decodeResponseMessage(UnionValue uv, ResponseMessage rm) throws ParseException {
@@ -78,7 +83,6 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 			return rv;
 		}
 
-		
 		if (rv.getValueEncoding().equals(_BODY_FIELD_JSON_ENCODING_NAME_)) {
 			Object obj;
 			obj = parser.parse(rm.getContent());
@@ -89,8 +93,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 				rv = (RecordValue) mappedObject;
 			return rv;
 		}
-		
-		
+
 		String[] responseFieldsNames = rv.getFieldNames();
 		HttpFields headers = rm.getHeaderFields();
 		for (int i = 0; i < responseFieldsNames.length; i++) {
@@ -208,8 +211,8 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 																														// for
 																														// backward
 																														// compatibility
-				typeEncoding.equals(_POST_RESPONSE_ENCODING_NAME_) ||
-				typeEncoding.equals(_DELETE_RESPONSE_ENCODING_NAME_))) {
+				typeEncoding.equals(_POST_RESPONSE_ENCODING_NAME_)
+				|| typeEncoding.equals(_DELETE_RESPONSE_ENCODING_NAME_))) {
 			try {
 
 				// So we should be able to decode this message.
@@ -229,7 +232,8 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 					uv.setVariant(fieldName, variant);
 					// #3: Set Variant as variant in Union
 					return uv;
-				} else if (decodingHypothesis.getTypeClass() == TciTypeClass.RECORD || decodingHypothesis.getTypeClass() == TciTypeClass.SET) {
+				} else if (decodingHypothesis.getTypeClass() == TciTypeClass.RECORD
+						|| decodingHypothesis.getTypeClass() == TciTypeClass.SET) {
 					// Record: Only body without response code.
 					// #1: Decode Response
 					return decodeResponseMessage(decodingHypothesis.newInstance(), rm);
@@ -466,11 +470,12 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 		httpClient.setFollowRedirects(false);
 
 		List<HeaderField> headers = HeaderField.collectHeaders(restMsg, null);
-		
+
 		// check whether encode is one of the supported
 		if (sendMessage.getType().getTypeEncoding().equals(_GET_ENCODING_NAME_)) {
 			try {
-				Request request = createRequest(httpClient, "GET", authorization, strEndpoint, dumpMessage, headers);
+				Request request = createRequest(httpClient, "GET", authorization, strEndpoint, dumpMessage, headers,
+						this.dumpHeaders);
 			} catch (Exception e1) {
 				e1.printStackTrace();
 				tciErrorReq(e1.getMessage());
@@ -481,7 +486,8 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 
 		} else if (sendMessage.getType().getTypeEncoding().equals(_POST_ENCODING_NAME_)) {
 			try {
-				Request request = createRequest(httpClient, "POST", authorization, strEndpoint, dumpMessage, headers);
+				Request request = createRequest(httpClient, "POST", authorization, strEndpoint, dumpMessage, headers,
+						this.dumpHeaders);
 				request.content(new StringContentProvider(createBody(restMsg), "UTF-8"), _CONTENT_JSON_ENCODING_);
 				dumpMessage.append("\n" + createBody(restMsg));
 
@@ -493,7 +499,8 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 			return TriMessageImpl.valueOf(dumpMessage.toString().getBytes(StandardCharsets.UTF_8));
 		} else if (sendMessage.getType().getTypeEncoding().equals(_HEAD_ENCODING_NAME_)) {
 			try {
-				Request request = createRequest(httpClient, "HEAD", authorization, strEndpoint, dumpMessage, headers);
+				Request request = createRequest(httpClient, "HEAD", authorization, strEndpoint, dumpMessage, headers,
+						this.dumpHeaders);
 			} catch (Exception e1) {
 				e1.printStackTrace();
 				tciErrorReq(e1.getMessage());
@@ -503,8 +510,8 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 			return TriMessageImpl.valueOf(dumpMessage.toString().getBytes(StandardCharsets.UTF_8));
 		} else if (sendMessage.getType().getTypeEncoding().equals(_OPTIONS_ENCODING_NAME_)) {
 			try {
-				Request request = createRequest(httpClient, "OPTIONS", authorization, strEndpoint, dumpMessage,
-						headers);
+				Request request = createRequest(httpClient, "OPTIONS", authorization, strEndpoint, dumpMessage, headers,
+						this.dumpHeaders);
 				request.content(new StringContentProvider(createBody(restMsg), "UTF-8"), _CONTENT_JSON_ENCODING_);
 				dumpMessage.append("\n" + createBody(restMsg));
 
@@ -516,7 +523,8 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 			return TriMessageImpl.valueOf(dumpMessage.toString().getBytes(StandardCharsets.UTF_8));
 		} else if (sendMessage.getType().getTypeEncoding().equals(_PUT_ENCODING_NAME_)) {
 			try {
-				Request request = createRequest(httpClient, "PUT", authorization, strEndpoint, dumpMessage, headers);
+				Request request = createRequest(httpClient, "PUT", authorization, strEndpoint, dumpMessage, headers,
+						this.dumpHeaders);
 				request.content(new StringContentProvider(createBody(restMsg), "UTF-8"), _CONTENT_JSON_ENCODING_);
 				dumpMessage.append("\n" + createBody(restMsg));
 
@@ -528,11 +536,12 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 			return TriMessageImpl.valueOf(dumpMessage.toString().getBytes(StandardCharsets.UTF_8));
 		} else if (sendMessage.getType().getTypeEncoding().equals(_DELETE_ENCODING_NAME_)) {
 			try {
-				Request request = createRequest(httpClient, "DELETE", authorization, strEndpoint, dumpMessage, headers);
+				Request request = createRequest(httpClient, "DELETE", authorization, strEndpoint, dumpMessage, headers,
+						this.dumpHeaders);
 				String body = createBody(restMsg);
 				if (body != null) {
 					request.content(new StringContentProvider(body, "UTF-8"), _CONTENT_JSON_ENCODING_);
-				dumpMessage.append("\n" + body);
+					dumpMessage.append("\n" + body);
 				} else {
 					dumpMessage.append("\n");
 				}
@@ -544,7 +553,8 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 			return TriMessageImpl.valueOf(dumpMessage.toString().getBytes(StandardCharsets.UTF_8));
 		} else if (sendMessage.getType().getTypeEncoding().equals(_PATCH_ENCODING_NAME_)) {
 			try {
-				Request request = createRequest(httpClient, "PATCH", authorization, strEndpoint, dumpMessage, headers);
+				Request request = createRequest(httpClient, "PATCH", authorization, strEndpoint, dumpMessage, headers,
+						this.dumpHeaders);
 				request.content(new StringContentProvider(createBody(restMsg), "UTF-8"), _CONTENT_JSON_ENCODING_);
 				dumpMessage.append("\n" + createBody(restMsg));
 
@@ -713,7 +723,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 	}
 
 	public Request createRequest(HttpClient client, String method, String authorization, String path,
-			StringBuilder dumpMessage, List<HeaderField> templateHeadfields) throws Exception {
+			StringBuilder dumpMessage, List<HeaderField> templateHeadfields, boolean dumpHeaders) throws Exception {
 		client.start();
 		Request request = null;
 		switch (method) {
@@ -766,9 +776,15 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 
 		for (Iterator<HeaderField> iterator = templateHeadfields.iterator(); iterator.hasNext();) {
 			HeaderField headerField = iterator.next();
-			request.header(headerField.getHeaderName(), ((UniversalCharstringValue) headerField.getValue()).getString());
+			request.header(headerField.getHeaderName(),
+					((UniversalCharstringValue) headerField.getValue()).getString());
 		}
 
+		if (!dumpHeaders) {
+			return request;
+		}
+
+		// Dumping the header fields
 		HttpFields fields = request.getHeaders();
 
 		boolean hasTransferEncoding = false;
@@ -828,24 +844,27 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 				try {
 					assert ((StringUtils.countMatches(restMessage.getField(param).toString(), "\"")
 							% 2) == 0) : "Uneven occurence of \". FIX handling.";
+
 					if (!((restMessage.getField(param).getType().getTypeClass() == TciTypeClass.CHARSTRING)
 							|| restMessage.getField(param).getType().getTypeClass() == TciTypeClass.UNIVERSAL_CHARSTRING
 							|| restMessage.getField(param).getType().getTypeClass() == TciTypeClass.INTEGER)) {
-						logError("Only supporting Universal Charstring, Charstring or Integer Fields so far.");
+						logError("Only supporting Universal Charstring, Charstring or Integer Fields for template replacement so far.");
 						return null;
 					}
 
 					if (restMessage.getField(param).getType().getTypeClass() == TciTypeClass.INTEGER) {
+
 						String bi = ((IntegerValue) restMessage.getField(param)).getBigInt().toString();
 						instantiatedPath = StringUtils.replace(instantiatedPath, "{" + param + "}",
 								URLEncoder.encode(bi, "UTF-8").replace("+", "%20"));
-						return instantiatedPath;
-					}
+					} else if (restMessage.getField(param).getType()
+							.getTypeClass() == TciTypeClass.UNIVERSAL_CHARSTRING) {
 
-					String uriEncodedFieldValue = ((UniversalCharstringValue) restMessage.getField(param)).getString()
-							.replace("+", "%2");
-					instantiatedPath = StringUtils.replace(instantiatedPath, "{" + param + "}",
-							URLEncoder.encode(uriEncodedFieldValue, "UTF-8").replace("+", "%20"));
+						String uriEncodedFieldValue = ((UniversalCharstringValue) restMessage.getField(param))
+								.getString().replace("+", "%2");
+						instantiatedPath = StringUtils.replace(instantiatedPath, "{" + param + "}",
+								URLEncoder.encode(uriEncodedFieldValue, "UTF-8").replace("+", "%20"));
+					}
 				} catch (UnsupportedEncodingException e) {
 					logError("Unsupported Encoding execption", e);
 					return null;
