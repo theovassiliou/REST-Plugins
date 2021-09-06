@@ -28,6 +28,11 @@ public class HeaderField implements Value, TTCNRESTMapping {
 	Value v = null;
 	String fn = "";
 
+	/**
+	 * HeaderField represents a HTTP header field, with 
+	 * @param value as the header field content
+	 * @param fieldName the header field name, might be superseded by the value Encoding of this field
+	 */
 	public HeaderField(Value value, String fieldName) {
 		v = value;
 		fn = fieldName;
@@ -101,6 +106,12 @@ public class HeaderField implements Value, TTCNRESTMapping {
 		return false;
 	}
 
+	/**
+	 * collectHeaders recognizes and stores a tciValue as header field. Dives into records or set.
+	 * @param theValue the tciValue to store as header
+	 * @param fieldName the fieldName == default headerFieldName, might be superseded by value encoding
+	 * @return
+	 */
 	static public List<HeaderField> collectHeaders(Value theValue, String fieldName) {
 		List<HeaderField> listOfValue = new ArrayList<HeaderField>();
 
@@ -152,10 +163,22 @@ public class HeaderField implements Value, TTCNRESTMapping {
 			}
 		}
 
-		return sb;
-
+		return getHeaderBuilder(headers);
 	}
 
+
+	static public StringBuilder getHeaderBuilder(List<HeaderField> headers) {
+		StringBuilder sb = new StringBuilder();
+
+		for (HeaderField headerField : headers) {
+			if (headerField.isHeader()) {
+				sb.append(headerField.getHeaderName() + ": " + headerField.getHeaderValue() + "\n");
+			}
+		}
+		return sb;
+	}
+
+	
 	public boolean isHeader() {
 		return (!v.notPresent() && (v.getValueEncoding().startsWith(_HEADER_FIELD_ENCODING_PREFIX_)) || !fn.equals(""));
 	}
