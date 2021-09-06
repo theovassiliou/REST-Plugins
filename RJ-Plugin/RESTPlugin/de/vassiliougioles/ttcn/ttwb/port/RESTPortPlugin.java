@@ -144,6 +144,9 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 		String queryParams = ParamField.buildQueryParams(params);
 		// Concat (1) and (3)
 		String strEndpoint = restCodec.saveURLConcat(baseURL, endPoint, queryParams);
+		
+		
+		
 		// Instantiate HttpClient
 		HttpClient httpClient = new HttpClient(new SslContextFactory());
 		// Configure HttpClient, for example:
@@ -157,14 +160,18 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 			// Start HttpClient
 			try {
 				httpClient.start();
+				
 				Request request = restCodec.createRequest(httpClient, "GET", getAuthorization(), strEndpoint,
-						dumpMessage, headers);
-				dumpMessage.append(HeaderField.fillRequest(request, headers));
+						dumpMessage, headers, !unitTestMode);
+				
 				if (unitTestMode) {
 					triEnqueueMsg(tsiPortId, null, componentId,
 							TriMessageImpl.valueOf(dumpMessage.toString().getBytes(StandardCharsets.UTF_8)));
 					return TriStatusImpl.OK;
+				
 				} else {
+					HeaderField.fillRequest(request, headers);
+					dumpMessage.append(HeaderField.getHeaderBuilder(headers));
 					Response response = sendRequest(request);
 					if (response != null) {
 						StringBuilder builder = new StringBuilder();
@@ -176,6 +183,7 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 						triEnqueueMsg(tsiPortId, rcvSutAddress, componentId, rcvMessage);
 					}
 				}
+				
 			} catch (Exception e1) {
 				e1.printStackTrace();
 				new TriStatusImpl(e1.getMessage());
@@ -193,12 +201,16 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 			try {
 				httpClient.start();
 				Request request = restCodec.createRequest(httpClient, "POST", getAuthorization(), strEndpoint,
-						dumpMessage, headers);
+						dumpMessage, headers, !unitTestMode);
 				dumpMessage.append(HeaderField.fillRequest(request, headers));
 				request.content(new StringContentProvider(restCodec.createBody(restMsg), "UTF-8"),
 						_CONTENT_JSON_ENCODING_);
 				dumpMessage.append("\n" + restCodec.createBody(restMsg));
-
+				if (unitTestMode) {
+					triEnqueueMsg(tsiPortId, null, componentId,
+							TriMessageImpl.valueOf(dumpMessage.toString().getBytes(StandardCharsets.UTF_8)));
+					return TriStatusImpl.OK;
+				}
 				Response response = sendRequest(request);
 				if (response != null) {
 					StringBuilder builder = new StringBuilder();
@@ -227,7 +239,7 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 			try {
 				httpClient.start();
 				Request request = restCodec.createRequest(httpClient, "DELETE", getAuthorization(), strEndpoint,
-						dumpMessage, headers);
+						dumpMessage, headers, !unitTestMode);
 				if (!headers.isEmpty()) {
 					dumpMessage.append(HeaderField.fillRequest(request, headers));
 				}
