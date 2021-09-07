@@ -1,0 +1,50 @@
+module UnitFramework {
+	import from Lib_HTTP all;
+
+	const charstring BASE_URL := "https://" & host & basePath;
+	modulepar charstring host := "petstore.swagger.io";
+	const charstring basePath := "/v2";
+
+	type port HTTPPort message {
+		inout all;
+		map param (RESTAPIconfig config);
+	}
+	with {
+		encode "RESTful"
+	}
+
+
+	type port TS_HTTPPort message {
+		inout all;
+		map param (RESTAPIconfig config);
+	}
+	with {
+		encode "RESTful"
+	}
+
+	type component TSRestService {
+		port TS_HTTPPort server;
+	}
+	type record GETRequest {
+	}
+	type component RESTComponent {
+		port HTTPPort service;
+	}
+
+	function setUp(TSRestService sys) runs on RESTComponent {
+		map(mtc:service, sys:server)
+		param (RESTAPIconfig:
+			   {
+				   baseUrl := BASE_URL,
+				   authorization := omit,
+				   unitTestMode := true
+			   });
+		activate(directMatch());
+	}
+
+	altstep directMatch() runs on RESTComponent {
+	[] service.receive {
+			setverdict(fail);
+		}
+	}
+}

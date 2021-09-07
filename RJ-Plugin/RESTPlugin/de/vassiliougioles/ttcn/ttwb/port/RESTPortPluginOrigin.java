@@ -37,7 +37,7 @@ import de.vassiliougioles.ttcn.ttwb.codec.HeaderField;
 import de.vassiliougioles.ttcn.ttwb.codec.ParamField;
 import de.vassiliougioles.ttcn.ttwb.codec.RESTJSONCodec;
 
-public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMapping, PortPluginProvider {
+public class RESTPortPluginOrigin extends AbstractRESTPortPlugin implements TTCNRESTMapping, PortPluginProvider {
 
 	private static final long serialVersionUID = -6523964658234648218L;
 	private String baseURL = _DEFAULT_BASE_URL_;
@@ -46,7 +46,7 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 	private RESTJSONCodec restCodec = null;
 
 	public ISAPlugin getPortPlugin() {
-		return new RESTPortPlugin();
+		return new RESTPortPluginOrigin();
 	}
 
 	public String getBaseURL() {

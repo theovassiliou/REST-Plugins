@@ -457,7 +457,14 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 		RecordValue restMsg = (RecordValue) sendMessage;
 
 		// Pass 1: Build Endpoint by replacing {} with field-values
-		String endPoint = constructEndpoint(restMsg);
+		String endPoint;
+		try {
+			endPoint = constructEndpoint(restMsg);
+		} catch (Exception e) {
+			logError(e.getMessage());
+			endPoint = null;
+		}
+		
 		// Pass 2: Collect all param-encoded field, deep
 		List<ParamField> params = ParamField.collectParams(restMsg, null);
 		// Pass 3: Build (additional) query params
@@ -603,7 +610,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 		return theJSON;
 	}
 
-	public void encodeResponseMessage(Response response, StringBuilder builder) {
+	public static void encodeResponseMessage(Response response, StringBuilder builder) {
 		builder.append(response.getVersion() + " ").append(response.getStatus());
 		builder.append(" ");
 		if (response.getReason() != null) {
@@ -628,7 +635,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 					break;
 				} else if (httpField.getName().equals("Transfer-Encoding") && values[i].equals("chunked")) {
 					hasTransferEncoding = true;
-					logError("Unexpected Transfer-Encoding header. Value: " + values[i]);
+					// logError("Unexpected Transfer-Encoding header. Value: " + values[i]);
 				} else {
 					builder.append(values[i]);
 					if (i < values.length - 1) {
@@ -651,7 +658,14 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 		}
 	}
 
-	public String saveURLConcat(String baseURL, String endPoint, String queryParams) {
+	/**
+	 * Constructs an URL from base, endpoint and optional queryParameters
+	 * @param baseURL
+	 * @param endPoint
+	 * @param queryParams
+	 * @return a fully constructed URL
+	 */
+	public static String saveURLConcat(String baseURL, String endPoint, String queryParams) {
 		StringBuffer sb = new StringBuffer(baseURL);
 
 		sb.append(endPoint);
@@ -817,14 +831,13 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 		return request;
 	}
 
-	public String constructEndpoint(RecordValue restMessage) {
+	public static String constructEndpoint(RecordValue restMessage) throws Exception {
 
 		// restMessage.encode() == _REQUEST_PATH_VARIANT_PREFIX_
 		// "path: /arrivalBoard/{id}?date={date}"
 		String path = restMessage.getType().getTypeEncodingVariant();
 		if (!path.startsWith(_REQUEST_PATH_VARIANT_PREFIX_)) {
-			logError("We only support path encoding variants for REST messages");
-			return null;
+			throw new Exception ("We only support path encoding variants for REST messages");
 		}
 		// so we only have paths so far
 		path = path.split(":")[1].trim();
@@ -836,7 +849,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 		return instantiatedPath;
 	}
 
-	private String replacePathParams(RecordValue restMessage, String path) {
+	private static String replacePathParams(RecordValue restMessage, String path) throws Exception {
 		String[] pathParams = StringUtils.substringsBetween(path, "{", "}");
 		String instantiatedPath = new String(path.toString());
 		if (pathParams != null) {
@@ -848,8 +861,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 					if (!((restMessage.getField(param).getType().getTypeClass() == TciTypeClass.CHARSTRING)
 							|| restMessage.getField(param).getType().getTypeClass() == TciTypeClass.UNIVERSAL_CHARSTRING
 							|| restMessage.getField(param).getType().getTypeClass() == TciTypeClass.INTEGER)) {
-						logError("Only supporting Universal Charstring, Charstring or Integer Fields for template replacement so far.");
-						return null;
+						throw new Exception("Only supporting Universal Charstring, Charstring or Integer Fields for template replacement so far.");
 					}
 
 					if (restMessage.getField(param).getType().getTypeClass() == TciTypeClass.INTEGER) {
@@ -866,8 +878,8 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 								URLEncoder.encode(uriEncodedFieldValue, "UTF-8").replace("+", "%20"));
 					}
 				} catch (UnsupportedEncodingException e) {
-					logError("Unsupported Encoding execption", e);
-					return null;
+					throw new Exception("Unsupported Encoding execption", e);
+					
 				}
 			}
 		}
