@@ -50,8 +50,8 @@ import de.vassiliougioles.ttcn.ttwb.port.TTCNRESTMapping;
 public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping, TciCDProvided {
 
 	static private JSONParser parser = new JSONParser();
-	private String baseURL = null;
-	private String authorization = null;
+	private String baseURL = _DEFAULT_BASE_URL_;
+	private String authorization = _DEFAULT_AUTHORIZATION_;
 	private boolean dumpHeaders = true;
 
 	public void setBaseUrl(String baseUrl) {
@@ -206,6 +206,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 			hParser.parseNext(bb);
 		}
 
+		
 		if ((typeEncoding.equals(_REST_RESPONSE_ENCODING_NAME_) || typeEncoding.equals(_GET_RESPONSE_ENCODING_NAME_) || // NOTE
 																														// kept
 																														// for
@@ -257,6 +258,15 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 			}
 			return httpResponseValue;
 		}
+		
+		if (decodingHypothesis.getTypeClass() == TciTypeClass.UNIVERSAL_CHARSTRING ) {
+			UniversalCharstringValue cv = (UniversalCharstringValue) decodingHypothesis.newInstance();
+			String s = new String(rcvdMessage.getEncodedMessage());
+			cv.setString(s);
+			return cv;
+		}
+		
+		
 		return super.decode(rcvdMessage, decodingHypothesis);
 	}
 
@@ -576,7 +586,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 		return super.encode(sendMessage);
 	}
 
-	public String createJSONBody(Value bodyField) {
+	public static String createJSONBody(Value bodyField) throws Exception {
 		String theJSON = null;
 		if (bodyField != null) {
 			theJSON = TTCN2JSONencode(bodyField);
@@ -584,7 +594,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 		return theJSON;
 	}
 
-	public String createFormDataBody(Value bodyField) {
+	public static String createFormDataBody(Value bodyField)  throws Exception {
 		String theJSON = null;
 		if (bodyField != null) {
 			theJSON = TTCN2JSONencode(bodyField);
@@ -592,7 +602,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 		return theJSON;
 	}
 
-	public String createBody(RecordValue restMessage) {
+	public static String createBody(RecordValue restMessage) throws Exception {
 		String theJSON = null;
 
 		Value fieldToEncode = null;
@@ -682,7 +692,7 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 		return sb.toString();
 	}
 
-	private String TTCN2JSONencode(Value fieldToEncode) {
+	private static String TTCN2JSONencode(Value fieldToEncode) throws Exception {
 		StringBuilder builder = new StringBuilder();
 
 		switch (fieldToEncode.getType().getTypeClass()) {
@@ -726,13 +736,13 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 			builder.append(((FloatValue) fieldToEncode).getFloat());
 			break;
 		default:
-			logError("No support of type " + fieldToEncode.getType().getName() + " in TTCN2JSONEncode(). Fix!");
+			throw new Exception("No support of type " + fieldToEncode.getType().getName() + " in TTCN2JSONEncode(). Fix!");
 		}
 
 		return builder.toString();
 	}
 
-	private String String2JSON(String string) {
+	private static String String2JSON(String string) {
 		return new String("\"" + string + "\"");
 	}
 

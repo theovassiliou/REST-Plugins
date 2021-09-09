@@ -8,6 +8,7 @@ module UnitFramework {
 	type port HTTPPort message {
 		inout all;
 		map param (RESTAPIconfig config);
+		address AddressRequestLine;
 	}
 	with {
 		encode "RESTful"
@@ -27,8 +28,20 @@ module UnitFramework {
 	}
 	type record GETRequest {
 	}
+	type string AddressRequestLine;
+
 	type component RESTComponent {
 		port HTTPPort service;
+	}
+
+	function assertRequestLine(string want, string got, string logMessage)
+		return boolean {
+		if (match(want, got)) {
+			setverdict(pass);
+			return true;
+		}
+		setverdict(fail, logMessage);
+		return false;
 	}
 
 	function setUp(TSRestService sys) runs on RESTComponent {

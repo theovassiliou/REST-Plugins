@@ -1,41 +1,37 @@
 module POSTRequestTests {
-	import from Lib_HTTP all;
+	import from openapiv3 all;
 	import from UnitFramework all;
 
 	type record POSTFindByStatus {
-		record of integer id optional,
-		Pet pet
+		record of integer id optional, Pet pet
 	}
 	with {
 		encode "REST/post";
 		variant "path: /pet/findByStatus";
 		encode (id) "query";
-		encode (pet) "body/json";
+		encode (pet) "body/json"
 	}
 
 
 	type record Pet {
-		string name, 
-		string _type,
-		record of string aspects
-	} with {
+		string name, string _type, record of string aspects
+	}
+	with {
 		variant (_type) "type"
 	}
-	
-	
-	template Pet firstPet := {
-		"the Pet 1",
-		"dog",
-		{"brown hair", "4 legs"}
-	}
-	
+
+
+	template Pet firstPet := {"the Pet 1", "dog", {"brown hair","4 legs"}}
+
 	testcase OneQuery() runs on RESTComponent system TSRestService {
+		var HTTPPort.address requestLine;
+
 		setUp(system);
-		service.send(POSTFindByStatus:{
-			{2246},
-			firstPet
-		});
-		service.receive;
+		service.send(POSTFindByStatus:{{2246},firstPet});
+		service.receive(?) -> sender requestLine;
+		assertRequestLine(requestLine,
+						  string:
+						  "POST https://petstore.swagger.io/v2/pet/findByStatus?id=2246"
+						  , "RequestLine not encoded correctly");
 	}
-	
 }
