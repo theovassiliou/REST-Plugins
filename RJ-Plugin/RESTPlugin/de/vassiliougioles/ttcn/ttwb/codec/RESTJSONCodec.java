@@ -652,13 +652,19 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 					}
 				}
 			}
+			if (builder.toString().endsWith(", ")) {
+				builder = builder.deleteCharAt(builder.length() - 1);
+				builder = builder.deleteCharAt(builder.length() - 1);
+			}
 			builder.append(" }");
 			break;
 		case TciTypeClass.CHARSTRING:
 			builder.append(String2JSON(((CharstringValue) fieldToEncode).getString()));
 			break;
 		case TciTypeClass.UNIVERSAL_CHARSTRING:
-			builder.append(String2JSON(((UniversalCharstringValue) fieldToEncode).getString()));
+			String s = String2JSON(((UniversalCharstringValue) fieldToEncode).getString());
+			String s_new = s.replace("\n", "\\n").replace("\t", "\\t").replace("\r", "\\r");
+			builder.append(s_new);
 			break;
 		case TciTypeClass.INTEGER:
 			builder.append(((IntegerValue) fieldToEncode).getInt());
@@ -731,10 +737,13 @@ public class RESTJSONCodec extends AbstractBaseCodec implements TTCNRESTMapping,
 		dumpMessage.append(request.getMethod() + " " + request.getURI() + " " + request.getVersion() + "\n");
 
 		for (Iterator<HeaderField> iterator = templateHeadfields.iterator(); iterator.hasNext();) {
-			HeaderField headerField = iterator.next();
-			if (!headerField.notPresent()) {
-				request.header(headerField.getHeaderName(),
-						((UniversalCharstringValue) headerField.getValue()).getString());
+			HeaderField headerF = iterator.next();
+			if (!headerF.notPresent()) {
+				Value v = headerF.getValue();
+				UniversalCharstringValue uv = (UniversalCharstringValue) v;
+				
+				
+				request.header(headerF.getHeaderName(),uv.getString());
 			}
 		}
 

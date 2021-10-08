@@ -237,6 +237,7 @@ module PetStoreExample {
 
 
 	template RESTAPIconfig baseConfig := {baseUrl := BASE_URL}
+	
 	template RESTAPIconfig configNoAuth modifies baseConfig := {
 		baseUrl := BASE_URL, authorization := omit
 	}
