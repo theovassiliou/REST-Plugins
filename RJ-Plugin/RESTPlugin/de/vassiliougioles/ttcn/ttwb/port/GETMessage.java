@@ -1,10 +1,6 @@
 package de.vassiliougioles.ttcn.ttwb.port;
 
-import java.util.concurrent.ExecutionException;
-
-import org.eclipse.jetty.client.HttpResponseException;
-import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.client.api.Response;
+import org.eclipse.jetty.client.util.StringContentProvider;
 import org.etsi.ttcn.tci.Value;
 import org.etsi.ttcn.tri.TriAddress;
 import org.etsi.ttcn.tri.TriMessage;
@@ -17,32 +13,20 @@ import de.vassiliougioles.ttcn.ttwb.codec.RESTJSONCodec;
  */
 public class GETMessage extends RESTMessage {
 
-	public GETMessage(TriMessage triMessage, TriAddress triAddress, Value portConfiguration) throws Exception {
-		super(triMessage, triAddress, portConfiguration);
-		
+	public GETMessage(Value sendMessage, TriAddress triAddress, Value portConfiguration) throws Exception {
+		super(sendMessage, triAddress, portConfiguration);
+
 		request = newRequest(endpoint);
 		defaultRequest(request);
-	}
 
-
-	public String sendMessage() throws Exception {
-		start();
-		Response response;
-		StringBuilder encResponse = new StringBuilder();
-		try {
-			response = request.send();
-			RESTJSONCodec.encodeResponseMessage(response, encResponse);
-			stop();
-		} catch (ExecutionException hrex) {
-			if (hrex.getCause() instanceof HttpResponseException) {
-				response = ((HttpResponseException) hrex.getCause()).getResponse(); // hrex.getResponse();
-			} else {
-				response = null;
-			}
+		// It could be discussed whether GET can has a body. But in case it has one,
+		// appended.
+		// See relevant section in RFC 7231
+		// (https://datatracker.ietf.org/doc/html/rfc7231#section-4)
+		String body = RESTJSONCodec.createBody(restMsg);
+		if (body != null) {
+			request.content(new StringContentProvider(body, "UTF-8"), _CONTENT_JSON_ENCODING_);
 		}
-		destroy();
-		return encResponse.toString();
-
 	}
 
 }

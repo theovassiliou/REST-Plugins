@@ -1,4 +1,6 @@
 module GETRequestTests {
+	import from Lib_HTTP {type RESTAPIconfig, EncodedRequest;}
+
 	import from openapiv3 all;
 	import from UnitFramework all;
 
@@ -17,11 +19,12 @@ module GETRequestTests {
 	}
 
 	type record GETFindByStatusTemplate {
-		string status, int64 id
+		string status, int64 id, double did
 	}
 	with {
 		encode "REST/get";
-		variant "path: /pet/findByStatus?status={status}&id={id}"
+		variant
+		"path: /pet/findByStatus?status={status}&id={id}&did={did}"
 	}
 
 
@@ -59,22 +62,28 @@ module GETRequestTests {
 		setUp(system);
 		service.send(GETFindByStatus:{{StatusEnum:"available"}});
 		service.receive(?) -> sender requestLine;
-		assertRequestLine(requestLine,
-						  string:
-						  "GET https://petstore.swagger.io/v2/pet/findByStatus?status=available"
-						  , "RequestLine not encoded correctly");
+		log(requestLine);
+		assertRequestLine(EncodedRequest:
+						  {
+							  "GET https://petstore.swagger.io/v2/pet/findByStatus?status=available HTTP/1.1",
+							  ?,
+							  omit
+						  }, requestLine, "RequestLine not encoded correctly");
 	}
+
 
 	testcase OneQueryWithTemplate() runs on RESTComponent system TSRestService {
 		var HTTPPort.address requestLine;
 
 		setUp(system);
-		service.send(GETFindByStatus:{{"available","pending"}});
+		service.send(GETFindByStatusTemplate:{"available",64,2.2});
 		service.receive(?) -> sender requestLine;
-		assertRequestLine(requestLine,
-						  string:
-						  "GET https://petstore.swagger.io/v2/pet/findByStatus?status=available&status=pending"
-						  , "RequestLine not encoded correctly");
+		assertRequestLine(EncodedRequest:
+						  {
+							  "GET https://petstore.swagger.io/v2/pet/findByStatus?status=available&id=64&did=2.2 HTTP/1.1",
+							  ?,
+							  omit
+						  }, requestLine, "RequestLine not encoded correctly");
 	}
 
 	testcase NoQuery() runs on RESTComponent system TSRestService {
@@ -83,10 +92,12 @@ module GETRequestTests {
 		setUp(system);
 		service.send(GETFindByStatus:{});
 		service.receive(?) -> sender requestLine;
-		assertRequestLine(requestLine,
-						  string:
-						  "GET https://petstore.swagger.io/v2/pet/findByStatus"
-						  , "RequestLine not encoded correctly");
+		assertRequestLine(EncodedRequest:
+						  {
+							  "GET https://petstore.swagger.io/v2/pet/findByStatus HTTP/1.1",
+							  ?,
+							  omit
+						  }, requestLine, "RequestLine not encoded correctly");
 	}
 
 
@@ -95,10 +106,12 @@ module GETRequestTests {
 		setUp(system);
 		service.send(GETFindByStatus:{status := {"available", "pending", ""}});
 		service.receive(?) -> sender requestLine;
-		assertRequestLine(requestLine,
-						  string:
-						  "GET https://petstore.swagger.io/v2/pet/findByStatus?status=available&status=pending&status="
-						  , "RequestLine not encoded correctly");
+		assertRequestLine(EncodedRequest:
+						  {
+							  "GET https://petstore.swagger.io/v2/pet/findByStatus?status=available&status=pending&status= HTTP/1.1",
+							  ?,
+							  omit
+						  }, requestLine, "RequestLine not encoded correctly");
 	}
 
 	testcase OneIntQuery() runs on RESTComponent system TSRestService {
@@ -106,10 +119,12 @@ module GETRequestTests {
 		setUp(system);
 		service.send(GETFindById:{id := {1}});
 		service.receive(?) -> sender requestLine;
-		assertRequestLine(requestLine,
-						  string:
-						  "GET https://petstore.swagger.io/v2/pet/findById?id=1"
-						  , "RequestLine not encoded correctly");
+		assertRequestLine(EncodedRequest:
+						  {
+							  "GET https://petstore.swagger.io/v2/pet/findById?id=1 HTTP/1.1",
+							  ?,
+							  omit
+						  }, requestLine, "RequestLine not encoded correctly");
 	}
 
 	testcase OneStatusIntQuery() runs on RESTComponent system TSRestService {
@@ -118,10 +133,12 @@ module GETRequestTests {
 		service.send(GETFindById:{status := {"available"},id := {1}});
 
 		service.receive(?) -> sender requestLine;
-		assertRequestLine(requestLine,
-						  string:
-						  "GET https://petstore.swagger.io/v2/pet/findById?status=available&id=1"
-						  , "RequestLine not encoded correctly");
+		assertRequestLine(EncodedRequest:
+						  {
+							  "GET https://petstore.swagger.io/v2/pet/findById?status=available&id=1 HTTP/1.1",
+							  ?,
+							  omit
+						  }, requestLine, "RequestLine not encoded correctly");
 	}
 
 	testcase SimpleTemplateReplace() runs on RESTComponent system TSRestService
@@ -130,10 +147,12 @@ module GETRequestTests {
 		setUp(system);
 		service.send(GETPetById:{id := 223});
 		service.receive(?) -> sender requestLine;
-		assertRequestLine(requestLine,
-						  string:
-						  "GET https://petstore.swagger.io/v2/pet/223/retrieve"
-						  , "RequestLine not encoded correctly");
+		assertRequestLine(EncodedRequest:
+						  {
+							  "GET https://petstore.swagger.io/v2/pet/223/retrieve HTTP/1.1",
+							  ?,
+							  omit
+						  }, requestLine, "RequestLine not encoded correctly");
 	}
 
 	testcase ComplexTemplateReplace()
@@ -143,9 +162,11 @@ module GETRequestTests {
 		service
 		.send(GETPetByParameters:{id := 223,name := "bucky",color := "red"});
 		service.receive(?) -> sender requestLine;
-		assertRequestLine(requestLine,
-						  string:
-						  "GET https://petstore.swagger.io/v2/pet/223/bucky/red/retrieve"
-						  , "RequestLine not encoded correctly");
+		assertRequestLine(EncodedRequest:
+						  {
+							  "GET https://petstore.swagger.io/v2/pet/223/bucky/red/retrieve HTTP/1.1",
+							  ?,
+							  omit
+						  }, requestLine, "RequestLine not encoded correctly");
 	}
 }

@@ -4,6 +4,7 @@
     <plugin id="de.vassiliougioles.ttcn.ttwb.codec.RJPlugin">
       <parameter id="class" value="de.vassiliougioles.ttcn.ttwb.codec.RESTJSONCodecProvider"/>
     </plugin>
+    <parameter id="default" value="true"/>
   </codec>
   <port>
     <plugin id="de.vassiliougioles.ttcn.ttwb.codec.RJPlugin">

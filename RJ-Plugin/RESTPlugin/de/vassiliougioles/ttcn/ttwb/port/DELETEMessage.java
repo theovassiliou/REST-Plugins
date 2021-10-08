@@ -11,20 +11,19 @@ import de.vassiliougioles.ttcn.ttwb.codec.RESTJSONCodec;
  * @author Theofanis Vassiliou-Gioles
  *
  */
-public class POSTMessage extends RESTMessage {
+public class DELETEMessage extends RESTMessage {
 
-	public POSTMessage(Value sendMessage, TriAddress triAddress, Value portConfiguration) throws Exception {
+	public DELETEMessage(Value sendMessage, TriAddress triAddress, Value portConfiguration) throws Exception {
 		super(sendMessage, triAddress, portConfiguration);
-		request = POST(endpoint);
+		request = newRequest(endpoint);
+		request.method("OPTIONS");
 		defaultRequest(request);
-
-		// POST can have a body. But in case it has one, appended.
-		// See relevant section in RFC 7231
-		// (https://datatracker.ietf.org/doc/html/rfc7231#section-4)
+		
+		// OPTIONS can has a body. But in case it has one, appended.
+		// See relevant section in RFC 7231 (https://datatracker.ietf.org/doc/html/rfc7231#section-4)
 		String body = RESTJSONCodec.createBody(restMsg);
 		if (body != null) {
 			request.content(new StringContentProvider(body, "UTF-8"), _CONTENT_JSON_ENCODING_);
 		}
 	}
-
 }

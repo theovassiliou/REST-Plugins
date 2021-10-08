@@ -1,4 +1,4 @@
-module PetStoreExample {
+module PetStoreExampleNew {
 	import from Lib_HTTP all except {type string;};
 	import from openapiv2 all;
 

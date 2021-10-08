@@ -26,7 +26,8 @@ module Lib_HTTP {
 
 
 	type record RESTAPIconfig {
-		string baseUrl, string authorization optional,
+		string baseUrl,
+		string authorization optional,
 		boolean unitTestMode optional
 	}
 
@@ -35,6 +36,13 @@ module Lib_HTTP {
 		in HTTPResponse;
 		out all;
 		map param (RESTAPIconfig config);
+		address EncodedRequest;
+	}
+
+	type record EncodedRequest {
+		string requestLine, record of string headers optional, string body optional
+	} 	with {
+		variant "HTTP/encodedRequest"
 	}
 
 	type component HTTPClient {
@@ -44,7 +52,7 @@ module Lib_HTTP {
 	type component HTTPServer {
 		port HTTPPort server;
 	}
-	
+
 	external function base64Encode(string msg) return charstring;
 }
 with {

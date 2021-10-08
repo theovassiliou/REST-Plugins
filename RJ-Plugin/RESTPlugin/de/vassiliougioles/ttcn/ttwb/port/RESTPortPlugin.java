@@ -74,6 +74,7 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 
 	}
 
+	
 	@Override
 	public TriStatus triSend(TriComponentId componentId, TriPortId tsiPortId, TriAddress triAddress,
 			TriMessage triSendMessage) {
@@ -85,7 +86,7 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 			String encResponse = theMessage.sendMessage();
 			TriMessage rcvMessage = TriMessageImpl.valueOf(encResponse.toString().getBytes(StandardCharsets.UTF_8));
 			// enqueue the URL as response address to be able to identify it in TTCN-3
-			TriAddressImpl rcvSutAddress = new TriAddressImpl(theMessage.getMethodCall().getBytes());
+			TriAddressImpl rcvSutAddress = buildAddress(theMessage);
 			triEnqueueMsg(tsiPortId, rcvSutAddress, componentId, rcvMessage);
 
 		} catch (Exception e) {
@@ -96,6 +97,10 @@ public class RESTPortPlugin extends AbstractRESTPortPlugin implements TTCNRESTMa
 
 	}
 
+	public TriAddressImpl buildAddress(RESTMessage theMessage) {
+		return new TriAddressImpl(theMessage.getEncMessageString().getBytes());
+	}
+	
 	public TriStatus triUnmapParam(TriPortId compPortId, TriPortId tsiPortId, TriParameterList paramList) {
 		sutAddress = null;
 		return TriStatusImpl.OK;

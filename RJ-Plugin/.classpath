@@ -7,7 +7,7 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="tt3plugins/RJPlugin/lib/jetty-all-9.4.2.v20170220-uber.jar"/>
+	<classpathentry kind="lib" path="tt3plugins/RJPlugin/lib/jetty-all-9.4.2.v20170220-uber.jar" sourcepath="/Users/the/Downloads/jetty.project-jetty-9.4.37.v20210219/jetty-client/src"/>
 	<classpathentry kind="lib" path="tt3plugins/RJPlugin/lib/json-simple-1.1.1.jar"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>

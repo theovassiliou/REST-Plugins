@@ -1,5 +1,6 @@
 package de.vassiliougioles.ttcn.ttwb.port;
 
+import java.net.ConnectException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -26,6 +27,27 @@ import de.vassiliougioles.ttcn.ttwb.codec.RESTJSONCodec;
 
 public abstract class RESTMessage extends HttpClient implements TTCNRESTMapping {
 
+	public static boolean isSupportedEncoding(String encoding) {
+
+		switch (encoding) {
+		case _GET_ENCODING_NAME_:
+		case _POST_ENCODING_NAME_:
+
+		case _DELETE_ENCODING_NAME_:
+
+		case _HEAD_ENCODING_NAME_:
+
+		case _OPTIONS_ENCODING_NAME_:
+
+		case _PUT_ENCODING_NAME_:
+
+		case _PATCH_ENCODING_NAME_:
+			return true;
+		default:
+			return false;
+		}
+	}
+
 	public static RESTMessage makeMessage(TriMessage triMessage, TriAddress triAddress, Value portConfiguration)
 			throws Exception {
 		RecordValue restMsg;
@@ -36,31 +58,48 @@ public abstract class RESTMessage extends HttpClient implements TTCNRESTMapping 
 		}
 		restMsg = (RecordValue) ((TciValueContainer) triMessage).getValue();
 
+		return makeMessage(restMsg, triAddress, portConfiguration);
+	}
+
+	public static RESTMessage makeMessage(Value sendMessage, TriAddress triAddress, Value portConfiguration)
+			throws Exception {
+		RecordValue restMsg = (RecordValue) sendMessage;
+
 		switch (restMsg.getType().getTypeEncoding()) {
 		case _GET_ENCODING_NAME_:
-			return new GETMessage(triMessage, triAddress, portConfiguration);
+			return new GETMessage(sendMessage, triAddress, portConfiguration);
 		case _POST_ENCODING_NAME_:
-			return new POSTMessage(triMessage, triAddress, portConfiguration);
-
+			return new POSTMessage(sendMessage, triAddress, portConfiguration);
+		case _DELETE_ENCODING_NAME_:
+			return new DELETEMessage(sendMessage, triAddress, portConfiguration);
+		case _HEAD_ENCODING_NAME_:
+			return new HEADMessage(sendMessage, triAddress, portConfiguration);
+		case _OPTIONS_ENCODING_NAME_:
+			return new OPTIONSMessage(sendMessage, triAddress, portConfiguration);
+		case _PUT_ENCODING_NAME_:
+			return new PUTMessage(sendMessage, triAddress, portConfiguration);
+		case _PATCH_ENCODING_NAME_:
+			return new PATCHMessage(sendMessage, triAddress, portConfiguration);
 		default:
 			throw new Exception("Unsupported encoding: " + restMsg.getType().getTypeEncoding());
 		}
 
 	}
-	Value sutAddress = null;
-	protected String baseURL = _DEFAULT_BASE_URL_;
+
 	protected String authorization = _DEFAULT_AUTHORIZATION_;
-	protected List<HeaderField> headers;
-	protected RecordValue restMsg = null;
-	protected Request request ;
-	
+	protected String baseURL = _DEFAULT_BASE_URL_;
+	private StringBuilder encBody = new StringBuilder();
+	private StringBuilder encHeader = new StringBuilder();
+	private StringBuilder encStatusLine = new StringBuilder();
 	protected String endpoint;
 
-	private StringBuilder encStatusLine = new StringBuilder();
-	private StringBuilder encHeader = new StringBuilder();
-	private StringBuilder encBody = new StringBuilder();
+	protected List<HeaderField> headers;
 
-	protected RESTMessage(TriMessage triMessage, TriAddress triAddress, Value portConfiguration) throws Exception {
+	protected Request request;
+	protected RecordValue restMsg = null;
+	Value sutAddress = null;
+
+	protected RESTMessage(Value sendMessage, TriAddress triAddress, Value portConfiguration) throws Exception {
 		super(new SslContextFactory());
 		setFollowRedirects(false);
 
@@ -69,9 +108,7 @@ public abstract class RESTMessage extends HttpClient implements TTCNRESTMapping 
 		// Determine where to send
 		processSendTo(triAddress);
 
-		if (triMessage != null) {
-			restMsg = (RecordValue) ((TciValueContainer) triMessage).getValue();
-		}
+		restMsg = (RecordValue) sendMessage;
 
 		// Pass 1: Build Endpoint by replacing {} with field-values
 		String endPoint = RESTJSONCodec.constructEndpoint(restMsg);
@@ -83,28 +120,16 @@ public abstract class RESTMessage extends HttpClient implements TTCNRESTMapping 
 		String queryParams = ParamField.buildQueryParams(params);
 
 		// concat (1) and (3)
-		endpoint = RESTJSONCodec.saveURLConcat(baseURL, endPoint, queryParams);
-
+		if (!baseURL.startsWith(_DEFAULT_BASE_URL_)) {
+			endpoint = RESTJSONCodec.saveURLConcat(baseURL, endPoint, queryParams);
+		} else {
+			endpoint = RESTJSONCodec.saveURLConcat(_MAGIC_BASE_URL_, endPoint, queryParams);
+		}
 		headers = HeaderField.collectHeaders(restMsg, null);
 	}
-	
-	protected Response sendRequest(Request request) throws InterruptedException, TimeoutException, ExecutionException {
-		Response response;
-		try {
-			response = request.send();
-		} catch (ExecutionException hrex) {
-			// e.g. if a
-			if (hrex.getCause() instanceof HttpResponseException) {
-				response = ((HttpResponseException) hrex.getCause()).getResponse(); // hrex.getResponse();
-			} else {
-				response = null;
-			}
-		}
-		return response;
-	}
-	
+
 	public void defaultRequest(Request req) throws Exception {
-		setEncHeader(req.getMethod() + " " + req.getURI() + " " + req.getVersion() + "\n");
+		setEncStatusLine(req.getMethod() + " " + req.getURI() + " " + req.getVersion() + "\n");
 		req.header("Accept", "application/json");
 
 		if (!authorization.equals(_DEFAULT_AUTHORIZATION_)) {
@@ -114,7 +139,10 @@ public abstract class RESTMessage extends HttpClient implements TTCNRESTMapping 
 
 		for (Iterator<HeaderField> iterator = headers.iterator(); iterator.hasNext();) {
 			HeaderField headerField = iterator.next();
-			req.header(headerField.getHeaderName(), ((UniversalCharstringValue) headerField.getValue()).getString());
+			if (!headerField.notPresent()) {
+				req.header(headerField.getHeaderName(),
+						((UniversalCharstringValue) headerField.getValue()).getString());
+			}
 		}
 
 		// Dumping the header fields
@@ -186,6 +214,22 @@ public abstract class RESTMessage extends HttpClient implements TTCNRESTMapping 
 		return encHeader.toString();
 	}
 
+	public String getEncMessageString() {
+		StringBuilder theMessage =new StringBuilder();
+		
+		// In case we do not have a BASE URL we have to strip the MAGIC Sequences
+		CharSequence sub = encStatusLine.subSequence(this.request.getMethod().length()+1, this.request.getMethod().length()+1+_MAGIC_BASE_URL_.length());
+		if (sub.equals(_MAGIC_BASE_URL_)) {
+			encStatusLine.replace(this.request.getMethod().length()+1, this.request.getMethod().length()+1+_MAGIC_BASE_URL_.length(), "");
+		}
+		
+		theMessage.append(encStatusLine);
+		theMessage.append(encHeader);
+		theMessage.append(encBody);
+
+		return theMessage.toString();
+	}
+
 	public StringBuilder getEncStatusLine() {
 		return encStatusLine;
 	}
@@ -193,7 +237,6 @@ public abstract class RESTMessage extends HttpClient implements TTCNRESTMapping 
 	public String getEncStatusLineString() {
 		return encStatusLine.toString();
 	}
-	
 
 	/**
 	 * getEndpoint returns the endpoint (scheme + baseURL + endPoint + queryParams)
@@ -203,19 +246,9 @@ public abstract class RESTMessage extends HttpClient implements TTCNRESTMapping 
 	public String getEndpoint() {
 		return endpoint;
 	}
-	
+
 	public String getMethodCall() {
 		return request.getMethod() + " " + getEndpoint();
-	}
-
-	public String getMessage() {
-		StringBuilder theMessage = new StringBuilder();
-
-		theMessage.append(encStatusLine);
-		theMessage.append(encHeader);
-		theMessage.append(encBody);
-
-		return theMessage.toString();
 	}
 
 	/**
@@ -240,7 +273,32 @@ public abstract class RESTMessage extends HttpClient implements TTCNRESTMapping 
 	 * @return the string encoded response
 	 * @throws Exception in case there are some problems
 	 */
-	public abstract String sendMessage() throws Exception;
+	public String sendMessage() throws Exception {
+		start();
+		StringBuilder encResponse = new StringBuilder();
+		Response response = sendRequest(request);
+		RESTJSONCodec.encodeResponseMessage(response, encResponse);
+		stop();
+		destroy();
+		return encResponse.toString();
+	}
+
+	protected Response sendRequest(Request request) throws InterruptedException, TimeoutException, ExecutionException {
+		Response response;
+		try {
+			response = request.send();
+		} catch (ExecutionException hrex) {
+			// e.g. if a
+			if (hrex.getCause() instanceof HttpResponseException) {
+				response = ((HttpResponseException) hrex.getCause()).getResponse(); // hrex.getResponse();
+			} else if (hrex.getCause() instanceof ConnectException) {
+				throw hrex;
+			} else {
+				response = null;
+			}
+		}
+		return response;
+	};
 
 	public void setAuthorization(String authorization) {
 		this.authorization = authorization;

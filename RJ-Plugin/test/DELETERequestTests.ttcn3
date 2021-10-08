@@ -1,17 +1,12 @@
-module POSTRequestTests {
-	import from Lib_HTTP {type RESTAPIconfig, EncodedRequest;}
-
+module DELETERequestTests {
 	import from openapiv3 all;
 	import from UnitFramework all;
 
-	import from openapiv3 all;
-	import from UnitFramework all;
-
-	type record POSTFindByStatus {
+	type record DELETEFindByStatus {
 		record of integer id optional, Pet pet
 	}
 	with {
-		encode "REST/post";
+		encode "REST/delete";
 		variant "path: /pet/findByStatus";
 		encode (id) "query";
 		encode (pet) "body/json"
@@ -32,11 +27,11 @@ module POSTRequestTests {
 		var HTTPPort.address requestLine;
 
 		setUp(system);
-		service.send(POSTFindByStatus:{{2246},firstPet});
+		service.send(DELETEFindByStatus:{{2246},firstPet});
 		service.receive(?) -> sender requestLine;
-		assertRequestLine(EncodedRequest:{
-						"POST https://petstore.swagger.io/v2/pet/findByStatus?id=2246", ?,?},
-		requestLine,
-						  "RequestLine not encoded correctly");
+		assertRequestLine(requestLine,
+						  string:
+						  "DELETE https://petstore.swagger.io/v2/pet/findByStatus?id=2246"
+						  , "RequestLine not encoded correctly");
 	}
 }
